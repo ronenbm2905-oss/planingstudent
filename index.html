@@ -1087,7 +1087,7 @@ function parseGradeRows(rows){
     const n=r.findIndex(c=>/שם (ה)?קורס|^קורס$|שם מקצוע|^מקצוע$|course/i.test(c));
     const g=r.findIndex(c=>/ציון סופי|^סופי$|final/i.test(c));
     const g2=r.findIndex(c=>/^ציון$|ציון|grade/i.test(c));
-    if(n>=0&&(g>=0||g2>=0)){hi=i;nc=n;gc=g>=0?g:g2;cc=r.findIndex(c=>/נ"?ז|נק"?ז|נקודות|קרדיט|credit|ש"?ש/i.test(c))}
+    if(n>=0&&(g>=0||g2>=0)){hi=i;nc=n;gc=g>=0?g:g2;cc=r.findIndex(c=>/^נ["״׳']*ז$|נק["״]?ז|נקודות|קרדיט|credit/i.test(c))}
   }
   const out=[];
   const body=hi>=0?rows.slice(hi+1):rows;
@@ -1111,6 +1111,28 @@ function parseGradeRows(rows){
   }
   return out;
 }
+function parsePdfLines(lines){
+  let cols=null,last=null; const out=[];
+  const skip=/שנת לימוד|סמסטר|נקודות|ממוצע|סה"?כ|ציון עובר/;
+  for(const l of lines){
+    const txt=l.items.map(i=>i.s).join(' ');
+    if(l.items.some(i=>/^קורס$|שם (ה)?קורס|^מקצוע$/.test(i.s))&&l.items.some(i=>/^ציון/.test(i.s))){
+      cols=[];l.items.forEach(i=>cols.push([/קורס|מקצוע/.test(i.s)?'name':/^ציון/.test(i.s)?'grade':/^נ["״׳']*ז$|^נק["״]?ז$|נקודות/.test(i.s)?'cr':'o',i.cx]));last=null;continue}
+    if(!cols) continue;
+    const cell={name:[],grade:[],cr:[],o:[]};
+    l.items.forEach(i=>{let best='o',bd=1e9;cols.forEach(([k,x])=>{const d=Math.abs(i.cx-x);if(d<bd){bd=d;best=k}});cell[best].push(i.s)});
+    const nm=normCourse(cell.name.join(' ')), gr=cellNum(cell.grade.join(''),100), cr=cellNum(cell.cr.join(''),20);
+    if(gr===null){
+      if(last&&nm&&!cell.cr.length&&!cell.grade.length&&!skip.test(txt)&&last.y-l.y<30){last.course=normCourse(last.course+' '+nm);last.y=l.y}
+      else if(skip.test(txt)||cell.grade.length) last=null;
+      continue;
+    }
+    if(!nm||skip.test(nm)){last=null;continue}
+    last={course:nm,credits:cr,grade:gr,on:true,y:l.y}; out.push(last);
+  }
+  return out;
+}
+function dedupeGrades(list){const m=new Map();list.forEach(r=>{delete r.y;m.set(r.course,r)});return [...m.values()]}
 function matchGrade(name){
   const n=normCourse(name);
   return st.grades.find(g=>{const m=normCourse(g.course);return m===n||(m.length>3&&n.includes(m))||(n.length>3&&m.includes(n))});
@@ -1146,17 +1168,25 @@ async function readGradeFile(f){
   const name=f.name.toLowerCase();
   $('#gPreview').innerHTML='<div class="warnbox">קורא את הקובץ…</div>';
   try{
-    let rows=[];
+    let rows=[], parsed=null;
     if(name.endsWith('.pdf')){
       await loadLib('pdf'); await loadLib('pdfw');
       pdfjsLib.GlobalWorkerOptions.workerSrc=LIBS.pdfw;
       const doc=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false}).promise;
+      const pages=[];
       for(let pg=1;pg<=Math.min(doc.numPages,10);pg++){
         const tc=await (await doc.getPage(pg)).getTextContent();
-        const lines={};
-        tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/4);(lines[y]=lines[y]||[]).push(it)});
-        Object.keys(lines).map(Number).sort((a,b)=>b-a).forEach(y=>rows.push(lines[y].sort((a,b)=>b.transform[4]-a.transform[4]).map(it=>it.str.trim())));
+        const its=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({s:it.str.trim(),y:it.transform[5],cx:it.transform[4]+(it.width||0)/2}));
+        its.sort((a,b)=>b.y-a.y);
+        const lines=[];
+        its.forEach(it=>{const l=lines.find(q=>Math.abs(q.y-it.y)<3);if(l)l.items.push(it);else lines.push({y:it.y,items:[it]})});
+        lines.forEach(l=>l.items.sort((a,b)=>b.cx-a.cx));
+        pages.push(lines);
       }
+      const fixed=fixReversed(pages.flatMap(ls=>ls.map(l=>l.items.map(i=>i.s))));
+      let k=0; pages.forEach(ls=>ls.forEach(l=>{const r=fixed[k++];l.items.forEach((i,j)=>i.s=r[j])}));
+      parsed=pages.flatMap(parsePdfLines);
+      rows=pages.flatMap(ls=>ls.map(l=>l.items.map(i=>i.s)));
     }else if(/\.(xlsx|xls)$/.test(name)){
       await loadLib('xlsx');
       const wb=XLSX.read(new Uint8Array(await f.arrayBuffer()),{type:'array'});
@@ -1167,7 +1197,7 @@ async function readGradeFile(f){
       if(txt.includes('\uFFFD')){try{txt=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
       rows=textRows(txt,name.endsWith('.csv'));
     }
-    showGradePreview(parseGradeRows(rows),'קובץ');
+    showGradePreview(parsed&&parsed.length?dedupeGrades(parsed):parseGradeRows(rows),'קובץ');
   }catch(e){
     $('#gPreview').innerHTML='<div class="warnbox">לא הצלחתי לקרוא את הקובץ. אפשר לנסות לשמור אותו מחדש כ-Excel או CSV, או להעתיק את הטבלה ולהדביק אותה ב"להדביק טקסט".</div>';
   }
