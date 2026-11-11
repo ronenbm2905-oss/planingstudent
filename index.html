@@ -487,6 +487,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       </article>
       <article class="ccard">
         <div class="chead"><span class="cicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3 3 3-3"/></svg></span><div class="ctitle"><h3>קובץ מ-Moodle</h3><span>ייבוא ידני, בלי התחברות</span></div><span class="pill off" id="mdPill">לא יובא</span></div>
+        <div class="gmstat" id="mdStat">עוד לא יובא קובץ.</div>
         <label class="drop" id="mdFile"><input type="file" id="icsFile"><span class="dropicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3 3 3-3"/></svg></span><b>גוררים לכאן את קובץ היומן</b><span>או לוחצים כדי לבחור קובץ (‎.ics‎)</span></label>
         <div class="cfoot"><button type="button" class="linkbtn" id="icsDemo">לנסות עם קובץ לדוגמה</button>
         <details class="how"><summary>איך מורידים את הקובץ?</summary>
@@ -1372,7 +1373,7 @@ function parseIcs(text){
       const k=l.slice(0,i).split(';')[0].toUpperCase(), v=l.slice(i+1);
       if(k==='SUMMARY') cur.summary=unesc(v);
       if(k==='DESCRIPTION') cur.desc=unesc(v).slice(0,300);
-      if(k==='CATEGORIES') cur.course=unesc(v).split(',')[0].trim();
+      if(k==='CATEGORIES') cur.course=unesc(v).split(',')[0].trim().replace(/^(?:\d{4}\s+)?(?:(?:א|ב|ג|קיץ|שנתי|סמסטר\s+\S+)\s+)?/,'').trim();
       if(k==='LOCATION') cur.location=unesc(v).trim();
       if(k==='DTSTART'||k==='DTEND'){
         const m=v.match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})\d{2}(Z)?)?/);
@@ -1442,7 +1443,12 @@ function ingestCalendar(found,source,busyOnly){
   else $('#syncResult').innerHTML=`<div class="warnbox" style="background:color-mix(in srgb,var(--${added+updated?'ok':'warn'}) 12%,transparent)">${src}נמצאו ${found.length} אירועים: <b>${added} מבחנים והגשות נוספו</b>, ${updated} עודכנו${busyTxt}, ${same} כבר בלו״ז${past?`, ${past} כבר עברו`:''}${skipped?`, ${skipped} דולגו (אירועים של יום שלם או בלי שעה)`:''}.${added+updated||busy?' השיעורים מופיעים בלו״ז ובאילוצים, והלימוד מתוכנן סביבם.':' לא נמצאו מבחנים, הגשות או שיעורים עתידיים.'}</div>`;
   return {added,updated,busy};
 }
-function importIcs(text){ ingestCalendar(parseIcs(text),'ics') }
+function importIcs(text){
+  const found=parseIcs(text); const r=ingestCalendar(found,'ics');
+  const msg=`יובא עכשיו: ${r.added} מבחנים והגשות חדשים, ${r.updated} עודכנו, ${r.busy} שיעורים ואירועים נכנסו כזמן תפוס.`;
+  const el=$('#mdStat'); el.className='gmstat ok'; el.textContent=msg+' (מתוך '+found.length+' אירועים בקובץ)';
+  toast(msg+(r.busy?' השיעורים מופיעים בלו״ז.':''));
+}
 
 /* ---------- alerts ---------- */
 const THRESH=[[7*864e5,'שבוע'],[3*864e5,'3 ימים'],[864e5,'יום אחד'],[3*36e5,'3 שעות']];
@@ -1653,16 +1659,26 @@ $('#mailForm').onsubmit=e=>{e.preventDefault();
 $('#icsDemo').onclick=()=>importIcs(sampleIcs());
 function readIcsFile(f){
   if(!f) return;
-  $('#syncResult').innerHTML='<div class="warnbox">קורא את הקובץ…</div>';
+  $('#mdStat').className='gmstat';$('#mdStat').textContent='קורא את הקובץ…';
   const r=new FileReader();
-  r.onerror=()=>{$('#syncResult').innerHTML='<div class="warnbox">לא הצלחתי לקרוא את הקובץ. נסו לבחור אותו שוב, או לפתוח את האפליקציה בדפדפן במחשב.</div>'};
+  r.onerror=()=>{$('#mdStat').className='gmstat err';$('#mdStat').innerHTML='לא הצלחתי לקרוא את הקובץ. נסו לבחור אותו שוב, או לפתוח את האפליקציה בדפדפן במחשב.'};
   r.onload=()=>{
     const txt=String(r.result||'');
-    if(!/BEGIN:VCALENDAR/i.test(txt)){$('#syncResult').innerHTML=`<div class="warnbox">הקובץ "${esc(f.name)}" הוא לא קובץ יומן. ב-Moodle צריך ללחוץ <b>ייצוא</b> (לא "קבלת כתובת URL"), ואז לבחור כאן את הקובץ שירד. השם שלו בדרך כלל icalexport.ics.</div>`;return}
-    try{importIcs(txt)}catch(err){$('#syncResult').innerHTML='<div class="warnbox">משהו בקובץ לא תקין, ולא הצלחתי לקרוא אותו. שלחי לי צילום מסך של ההודעה הזו ואבדוק.</div>'}
+    if(!/BEGIN:VCALENDAR/i.test(txt)){$('#mdStat').className='gmstat err';$('#mdStat').innerHTML=`הקובץ "${esc(f.name)}" הוא לא קובץ יומן. ב-Moodle צריך ללחוץ <b>ייצוא</b> (לא "קבלת כתובת URL"), ואז לבחור כאן את הקובץ שירד. השם שלו בדרך כלל icalexport.ics.`;return}
+    try{importIcs(txt)}catch(err){$('#mdStat').className='gmstat err';$('#mdStat').innerHTML='משהו בקובץ לא תקין, ולא הצלחתי לקרוא אותו. שלחי לי צילום מסך של ההודעה הזו ואבדוק.'}
   };
   r.readAsText(f);
 }
+addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files'))e.preventDefault()});
+addEventListener('drop',e=>{
+  if(!e.dataTransfer||!e.dataTransfer.files.length) return;
+  e.preventDefault();
+  if(e.target.closest&&(e.target.closest('#mdFile')||e.target.closest('#gDrop'))) return;
+  const f=e.dataTransfer.files[0], n=f.name.toLowerCase();
+  if(n.endsWith('.ics')){ if(location.hash!=='#connect') location.hash='#connect'; readIcsFile(f) }
+  else if(/\.(pdf|xlsx|xls|csv)$/.test(n)){ if(location.hash!=='#grades') location.hash='#grades'; readGradeFile(f) }
+  else toast('הקובץ הזה לא מוכר. לייבוא מ-Moodle גוררים קובץ ‎.ics‎, ולגיליון ציונים קובץ PDF, Excel או CSV.');
+});
 $('#icsFile').onchange=e=>{readIcsFile(e.target.files[0]); e.target.value=''};
 const mdBox=$('#mdFile');
 mdBox.addEventListener('dragover',e=>{e.preventDefault();mdBox.classList.add('over')});
