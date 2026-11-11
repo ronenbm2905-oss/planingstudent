@@ -1,0 +1,18 @@
+{
+  "name": "שעת הדין",
+  "short_name": "שעת הדין",
+  "description": "מתכנן לימודים ולו״ז לסטודנטים למשפטים",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eff1ec",
+  "theme_color": "#1f5b46",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

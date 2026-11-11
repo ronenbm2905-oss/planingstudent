@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="שעת הדין: מתכנן לימודים ולו״ז לסטודנטים למשפטים.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5b46">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="שעת הדין">
 </head>
 <body>
 <title>שעת הדין</title>
@@ -258,6 +265,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .simcell{display:flex;align-items:center;gap:8px;min-width:190px}
 .simcell input[type=range]{flex:1;accent-color:var(--accent);min-width:110px}
 .simcell b{width:2.4em;text-align:center;font-variant-numeric:tabular-nums}
+.install{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
+.installsteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -540,6 +549,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <button id="btnNotify" type="button">הפעלת התראות מערכת</button>
         <button id="btnReset" type="button">חזרה לדוגמה</button>
         <button id="btnClear" type="button">התחלה מאפס</button>
+      </div>
+      <div class="install" id="installBox">
+        <h3>התקנה כאפליקציה בטלפון</h3>
+        <p class="small muted" id="installNote" style="margin:0"></p>
+        <button type="button" class="primary" id="installBtn" hidden>התקנת שעת הדין</button>
+        <div class="installsteps">
+          <div><b>iPhone (Safari)</b><ol class="steps"><li>פותחים את האתר ב-Safari.</li><li>לוחצים על כפתור השיתוף (ריבוע עם חץ למעלה).</li><li>בוחרים <b>הוספה למסך הבית</b> ← <b>הוספה</b>.</li></ol></div>
+          <div><b>Android (Chrome)</b><ol class="steps"><li>פותחים את האתר ב-Chrome.</li><li>לוחצים על שלוש הנקודות למעלה.</li><li>בוחרים <b>התקנת אפליקציה</b> (או <b>הוספה למסך הבית</b>).</li></ol></div>
+        </div>
       </div>
       <div id="clearConfirm" class="warnbox" hidden>
         <div class="spread"><span>למחוק את כל המבחנים, האילוצים, המשימות והמיילים ולהתחיל מלוח ריק?</span>
@@ -2128,6 +2146,21 @@ async function showShare(code){
   }catch(e){ $('#shareTitle').textContent='הקישור לא תקין'; $('#shareNote').textContent='אולי הוא נחתך בהעתקה. בקשו מהשולח/ת לשלוח אותו שוב.'; $('#shareWeek').innerHTML='' }
 }
 
+/* ---------- install as an app (PWA) ---------- */
+let installEv=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function renderInstall(){
+  const n=$('#installNote');
+  if(standalone()){n.textContent='האפליקציה כבר מותקנת ופתוחה כאפליקציה.';$('#installBtn').hidden=true;return}
+  if(window.claude){n.textContent='כדי להתקין, פותחים בטלפון את האתר planingstudent.netlify.app ומתקינים משם.';return}
+  n.textContent=installEv?'אפשר להתקין בלחיצה אחת. האפליקציה תקבל אייקון במסך הבית ותיפתח בלי שורת הכתובת.':'מוסיפים למסך הבית לפי ההוראות למטה. האפליקציה תקבל אייקון ותיפתח במסך מלא.';
+  $('#installBtn').hidden=!installEv;
+}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;renderInstall()});
+addEventListener('appinstalled',()=>{installEv=null;toast('שעת הדין הותקנה. אפשר לפתוח אותה מהמסך הבית.');renderInstall()});
+$('#installBtn').onclick=async()=>{if(!installEv)return;installEv.prompt();try{await installEv.userChoice}catch(e){}installEv=null;renderInstall()};
+renderInstall();
+
 /* ---------- pages ---------- */
 const PAGES=['home','exams','topics','constraints','tasks','grades','mail','connect','prefs'];
 function route(){
@@ -2169,5 +2202,6 @@ setInterval(()=>{
 </section>
 <script>(function(){function r(){var p=location.hash==="#privacy";document.getElementById("privacyView").hidden=!p;document.querySelector(".wrap").hidden=p;window.scrollTo(0,0)}window.addEventListener("hashchange",r);r()})();</script>
 <footer style="text-align:center;font-size:.8rem;padding:24px 16px"><a href="#privacy">מדיניות פרטיות</a></footer>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:"){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 </body>
 </html>
