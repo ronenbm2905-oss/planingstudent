@@ -289,6 +289,29 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted)}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:4px;vertical-align:middle;border:1px solid var(--line)}
 @media (max-width:700px){.hcell{min-height:52px;padding:4px}.hcell .hm{display:none}}
+.profpick{display:flex;flex-wrap:wrap;gap:6px}
+.profpick label{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:.88rem;border:1px solid var(--line);border-radius:99px;padding:6px 12px;background:var(--bg);cursor:pointer}
+.profpick label:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.profcards{display:flex;flex-direction:column;gap:14px}
+.pcard{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.pcount{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.pcount .big{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.ent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ent li{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+.ent li.used span{text-decoration:line-through;color:var(--muted)}
+.ent li span{flex:1}
+.ent input{width:17px;height:17px;accent-color:var(--accent);margin-top:2px}
+.rules td input{width:4.5em}
+.rules td input.rt{width:100%;min-width:12em}
+.doctext{max-height:220px;overflow:auto;white-space:pre-wrap;font-size:.82rem;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px}
+.chatlog{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto}
+.msg{border-radius:12px;padding:10px 12px;font-size:.92rem;white-space:pre-wrap;line-height:1.55;max-width:92%}
+.msg.u{align-self:flex-start;background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.msg.a{align-self:flex-end;background:var(--bg);border:1px solid var(--line)}
+.msg .mact{display:flex;gap:10px;margin-top:6px}
+.mtsel{width:17px;height:17px;accent-color:var(--accent)}
+.blk.conf{outline:2px dashed var(--danger);outline-offset:-2px}
+.cfx{display:block;font-size:.68rem;font-weight:700;color:var(--danger)}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -311,6 +334,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <a href="#constraints">אילוצים</a>
     <a href="#tasks">משימות</a>
     <a href="#grades">ציונים</a>
+    <a href="#study">חומרים וצ׳אט</a>
+    <a href="#accom">התאמות</a>
     <a href="#mail">מיילים</a>
     <a href="#connect">חיבורים</a>
     <a href="#prefs">הגדרות</a>
@@ -502,6 +527,41 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     </form>
   </section>
 
+  </div>
+
+  <div class="page" data-page="study" hidden>
+    <section class="panel">
+      <div><div class="eyebrow">חומרי לימוד</div><h2>מחברות בחינה, פסקי דין וסיכומים</h2></div>
+      <div class="row">
+        <label>קורס<input id="mtCourse" list="courseList" placeholder="דיני חוזים"></label>
+        <label>סוג<select id="mtKind"><option>מחברת בחינה</option><option>פסק דין</option><option>סיכום</option><option>סילבוס</option><option>מאמר</option><option>אחר</option></select></label>
+      </div>
+      <label class="drop" id="mtDrop"><input type="file" id="mtFile" multiple accept=".pdf,.docx,.txt,.md"><span class="dropicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><b>העלאת קבצים</b><span>PDF, Word או טקסט. הקבצים נשמרים רק במכשיר הזה.</span></label>
+      <div id="mtStat" class="gmstat"></div>
+      <ul class="clist" id="mtList"></ul>
+    </section>
+    <section class="panel" id="chatPanel">
+      <div class="spread"><div><div class="eyebrow">צ׳אט על החומרים</div><h2>שאלות, סיכומים וכרטיסיות</h2></div><span class="pill sheet">עונה רק מהקבצים שסימנת</span></div>
+      <p class="small muted" id="chatNote" style="margin:0"></p>
+      <div class="row" id="chatQuick">
+        <button type="button" data-q="sum">סיכום לפי נושאים</button>
+        <button type="button" data-q="cards">כרטיסיות לחזרה</button>
+        <button type="button" data-q="quiz">שאלות תרגול</button>
+        <button type="button" data-q="exam">ניתוח מחברת בחינה</button>
+      </div>
+      <div class="chatlog" id="chatLog"></div>
+      <form class="quick" id="chatForm"><input id="chatIn" placeholder="שאלה על החומרים, למשל: מה נקבע לגבי תום לב במשא ומתן?" autocomplete="off"><button class="primary" type="submit" id="chatSend">שליחה</button><button type="button" id="chatStop" hidden>עצירה</button></form>
+    </section>
+  </div>
+
+  <div class="page" data-page="accom" hidden>
+    <section class="panel">
+      <div><div class="eyebrow">התאמות וזכויות</div><h2>מה מגיע לי</h2></div>
+      <p class="small muted" style="margin:0">מסמנים מה רלוונטי לך, מכניסים את המתווה או התקנון של המכללה, ומגדירים את הזכאויות שמופיעות בו. האפליקציה מראה מה מגיע לך לפי המתווה שהכנסת בלבד, ולא ממציאה זכויות.</p>
+      <div class="profpick" id="profPick"></div>
+      <div class="row"><label>תחילת הסמסטר<input type="date" id="semFrom"></label><label>סוף הסמסטר<input type="date" id="semTo"></label></div>
+      <div id="profCards" class="profcards"></div>
+    </section>
   </div>
 
   <div class="page" data-page="mail" hidden>
@@ -731,6 +791,7 @@ function normalize(x){
   ['events','constraints','tasks','inbox'].forEach(k=>{if(!Array.isArray(x[k])) x[k]=[]});
   if(!x.alerts) x.alerts={};
   if(!Array.isArray(x.special)) x.special=[];
+  if(!x.accom||typeof x.accom!=='object') x.accom={sem:{},profiles:{}};
   x.constraints=x.constraints.filter(c=>!(c.src&&/הקלט|recording/i.test(c.title||'')));
   return x;
 }
@@ -897,6 +958,15 @@ function buildPlan(){
         }
       }
     }
+    const hard=blocks.filter(b=>b.type==='exam'||b.type==='fixed'||(b.type==='study'&&b.manual));
+    const lbl=b=>b.type==='exam'?'מבחן ב'+b.course:b.type==='study'?'לימוד '+b.course:b.title;
+    for(let x=0;x<hard.length;x++)for(let y=x+1;y<hard.length;y++){
+      const A=hard[x],B=hard[y];
+      if(A.allDay&&B.allDay) continue;
+      const ov=(A.allDay||B.allDay)?true:(A.start<B.end&&B.start<A.end);
+      if(!ov) continue;
+      if(!A.conflict)A.conflict=lbl(B); if(!B.conflict)B.conflict=lbl(A);
+    }
     blocks.sort((x,y)=>(y.allDay?1:0)-(x.allDay?1:0)||x.start-y.start);
     days[key]={key,date:d,blocks,rest,hol};
   }
@@ -906,6 +976,12 @@ function buildPlan(){
 
 /* ---------- rendering ---------- */
 function blockHtml(b){
+  const h=blockHtml0(b);
+  if(!b.conflict) return h;
+  const i=h.indexOf('</div>');
+  return h.slice(0,i).replace('class="blk ','class="blk conf ')+`<span class="cfx">⚠ חופף ל${esc(b.conflict)}</span>`+h.slice(i);
+}
+function blockHtml0(b){
   const cc=b.course?ccol(b.course):'var(--muted)';
   const time=b.allDay?'כל היום':(b.type==='deadline'?'עד '+fmtMin(b.start):fmtMin(b.start)+'–'+fmtMin(b.end));
   if(b.type==='study') return `<div class="blk study${b.manual?' pin':''}" style="--cc:${cc}"><span class="t">${time}</span><b>${esc(b.course)}</b> · ${esc(b.topic||b.title)}</div>`;
@@ -1047,7 +1123,7 @@ function renderDocket(){
       else if(b.type==='deadline'){title=`<span class="dot" style="--cc:${cc}"></span>הגשה: ${esc(b.course)}`;sub=esc(b.title)}
       else if(b.kind==='class'){title=`<span class="dot" style="--cc:${classColor(b.title)}"></span>${esc(b.title)}`;sub=['שיעור',b.location&&('כיתה: '+esc(b.location)),b.teacher&&('מרצה: '+esc(b.teacher))].filter(Boolean).join(' · ')}
       else {title=esc(b.title);sub=CON_LABEL[b.kind]||''}
-      h+=`<div class="dk${done&&editIdx!==i?' done':''}${cur?' nowb':''}"><span class="tm">${time}${cur?'<br><b>עכשיו</b>':''}</span><span class="ti"><b>${title}</b><small>${sub}</small></span>${editBtn(i)}${editIdx===i?editorHtml(b):''}</div>`;
+      h+=`<div class="dk${done&&editIdx!==i?' done':''}${cur?' nowb':''}"><span class="tm">${time}${cur?'<br><b>עכשיו</b>':''}</span><span class="ti"><b>${title}</b><small>${sub}${b.conflict?`<span class="cfx">⚠ חופף ל${esc(b.conflict)}</span>`:''}</small></span>${editBtn(i)}${editIdx===i?editorHtml(b):''}</div>`;
       if(b.type!=='deadline') prevEnd=b.end;
     });
     if(!docketRows.length&&!day.rest) h='<p class="muted">יום פנוי. אפשר להוסיף לו לימוד או פגישה.</p>';
@@ -1609,7 +1685,7 @@ function renderAlert(){
 /* ---------- render all ---------- */
 function render(){
   plan=buildPlan();
-  renderWeek(); renderDocket(); renderEvents(); renderConstraints(); renderTasks(); renderGrades(); renderTopics(); renderMail(); renderAlert(); renderDs(); renderHolidays(); renderLoad(); warnOverload();
+  renderWeek(); renderDocket(); renderEvents(); renderConstraints(); renderTasks(); renderGrades(); renderTopics(); renderMail(); renderAlert(); renderDs(); renderHolidays(); renderLoad(); warnOverload(); warnConflicts(); renderAccom();
   const s=st.settings;
   $('#sStart').value=s.dayStart; $('#sEnd').value=s.dayEnd; $('#sMax').value=s.maxHours; $('#sSess').value=s.session; $('#sBrk').value=s.brk; $('#sShab').checked=!!s.shabbat; $('#sHol').checked=s.holidays!==false;
 }
@@ -1945,6 +2021,7 @@ $('#gmFrom').onchange=()=>{st.gmailFrom=$('#gmFrom').value.trim().replace(/^@/,'
 (async()=>{
   try{ mcp=(window.claude&&typeof window.claude.use==='function')?await window.claude.use('mcp'):null }catch(e){ mcp=null }
   initGcal(); setTimeout(()=>{initExport();renderDs()},0);
+  setTimeout(async()=>{try{sampleFn=(window.claude&&typeof window.claude.use==='function')?await window.claude.use('sample'):null}catch(e){sampleFn=null}renderChatAvail();renderAccom()},0);
   if(gDirect&&GMAIL_DIRECT){ $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false; $('#gmBtn').textContent='התחברות עם Google ומשיכת מיילים'; setGm('','לוחצים, מתחברים עם Google ומאשרים קריאת מיילים. האפליקציה רק קוראת מיילים מהמכללה, לא שולחת ולא מוחקת.'); return }
   if(!mcp){ setGm('',window.claude?'חיבור ישיר ל-Gmail זמין כשפותחים את הקישור ב-claude.ai עם חשבון שמחובר אליו Gmail. בינתיים אפשר להדביק מיילים בקטע "מיילים מהמכללה".':'באתר הזה מדביקים מיילים ידנית בקטע "מיילים מהמכללה", והאפליקציה מסכמת אותם.'); $('#gmPill').className='pill off'; $('#gmPill').textContent='הדבקה ידנית'; $('#gmPaste').hidden=false; return }
   $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false;
@@ -2326,6 +2403,8 @@ function renderLoad(){
   $('#heat').innerHTML=h;
   const warns=[];
   const short=Object.values(plan.byId).filter(e=>e.rem>0);
+  const cf=upcomingConflicts(42);
+  if(cf.length) warns.push(`<b>חפיפות בלו״ז:</b> ${cf.slice(0,6).map(c=>`${dm(c.key)}: ${esc(c.a)} ו${esc(c.b)}`).join(' · ')}${cf.length>6?' ועוד':''}.`);
   if(short.length) warns.push(`<b>אין מספיק זמן ללמוד:</b> ${short.map(e=>`${esc(e.course)} (חסרות ${hrs(e.rem)} ש׳)`).join(' · ')}.`);
   weeks.forEach(w=>{ if(w.items>=2||w.heavy>=3) warns.push(`<b>שבוע ${dm(w.from)}–${dm(w.to)} עמוס במיוחד:</b> ${w.items?w.items+' מבחנים והגשות, ':''}${w.heavy} ימים עמוסים מאוד, ${hrs(w.study)} שעות לימוד מתוכננות.`) });
   $('#loadWarn').innerHTML=warns.length?`<div class="warnbox" style="display:flex;flex-direction:column;gap:4px">${warns.map(x=>`<span>${x}</span>`).join('')}<span class="small">אפשר להקדים לימוד, להגדיל את מקסימום השעות ביום בהגדרות, או לפנות זמן באילוצים.</span></div>`:'<div class="warnbox" style="background:color-mix(in srgb,var(--ok) 12%,transparent)">השבועות הקרובים מאוזנים. אין עומס חריג.</div>';
@@ -2416,8 +2495,208 @@ $('#quickForm').onsubmit=e=>{
   toast(`נוסף: ${KIND_TXT[q.kind]}${q.date?' ל-'+dm(q.date):''}. אפשר לערוך אותו בעמוד המתאים.`);
 };
 
+/* ---------- overlap warnings ---------- */
+function upcomingConflicts(n){
+  const out=[], T=today0();
+  for(let i=0;i<n;i++){const key=ymd(addDays(T,i)),day=plan.days[key]; if(!day) continue;
+    const seen=new Set();
+    day.blocks.filter(b=>b.conflict).forEach(b=>{const lb=b.type==='exam'?'מבחן ב'+b.course:b.type==='study'?'לימוד '+b.course:b.title;const k=[lb,b.conflict].sort().join('|');if(!seen.has(k)){seen.add(k);out.push({key,a:lb,b:b.conflict,id:key+'|'+k})}})}
+  return out;
+}
+let prevConf=null;
+function warnConflicts(){
+  const cf=upcomingConflicts(42), ids=new Set(cf.map(c=>c.id));
+  if(prevConf){const fresh=cf.filter(c=>!prevConf.has(c.id)); if(fresh.length){const c=fresh[0];toast(`⚠ חפיפה ב-${dm(c.key)}: ${esc(c.a)} ו${esc(c.b)} באותה שעה.${fresh.length>1?` ועוד ${fresh.length-1} חפיפות. פרטים בעמוד "עומס חודשי".`:''}`)}}
+  prevConf=ids;
+}
+
+/* ---------- file -> text (PDF, Word, text) ---------- */
+LIBS.jszip='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+async function fileToText(f){
+  const n=f.name.toLowerCase();
+  if(n.endsWith('.pdf')){
+    await loadLib('pdf'); await loadLib('pdfw'); pdfjsLib.GlobalWorkerOptions.workerSrc=LIBS.pdfw;
+    const doc=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false}).promise;
+    const rows=[];
+    for(let pg=1;pg<=Math.min(doc.numPages,80);pg++){
+      const tc=await (await doc.getPage(pg)).getTextContent();
+      const its=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({s:it.str,y:it.transform[5],x:it.transform[4]}));
+      its.sort((a,b)=>b.y-a.y); const lines=[];
+      its.forEach(it=>{const l=lines.find(q=>Math.abs(q.y-it.y)<3);if(l)l.items.push(it);else lines.push({y:it.y,items:[it]})});
+      lines.forEach(l=>rows.push(l.items.sort((a,b)=>b.x-a.x).map(i=>i.s)));
+      rows.push(['']);
+    }
+    return fixReversed(rows).map(r=>r.join(' ').replace(/\s+/g,' ').trim()).join('\n').replace(/\n{3,}/g,'\n\n');
+  }
+  if(n.endsWith('.docx')){
+    await loadLib('jszip');
+    const zip=await JSZip.loadAsync(await f.arrayBuffer());
+    const xml=await zip.file('word/document.xml').async('string');
+    return xml.replace(/<w:tab\/>/g,'\t').replace(/<\/w:p>/g,'\n').replace(/<w:br[^>]*\/>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/\n{3,}/g,'\n\n').trim();
+  }
+  if(n.endsWith('.doc')) throw new Error('doc');
+  const buf=await f.arrayBuffer(); let t=new TextDecoder('utf-8').decode(buf);
+  if(t.includes('�')){try{t=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
+  return t;
+}
+
+/* ---------- study materials (IndexedDB, this device only) ---------- */
+const IDB={p:null,
+  open(){return this.p||(this.p=new Promise((res,rej)=>{try{const r=indexedDB.open('shaat-hadin',1);r.onupgradeneeded=()=>r.result.createObjectStore('materials',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}))},
+  async run(mode,fn){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction('materials',mode);const st_=t.objectStore('materials');let out;const q=fn(st_);if(q)q.onsuccess=()=>{out=q.result};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error)})},
+  all(){return this.run('readonly',s=>s.getAll())}, put(x){return this.run('readwrite',s=>s.put(x))}, del(id){return this.run('readwrite',s=>s.delete(id))}
+};
+let mats=[], memMats=null, matSel=new Set();
+async function loadMats(){try{mats=await IDB.all()}catch(e){memMats=memMats||[];mats=memMats}mats.sort((a,b)=>b.added-a.added);renderMats()}
+async function saveMat(m){try{await IDB.put(m)}catch(e){(memMats=memMats||[]).push(m)}matSel.add(m.id);await loadMats()}
+function renderMats(){
+  const by={};mats.forEach(m=>{(by[m.course||'ללא קורס']=by[m.course||'ללא קורס']||[]).push(m)});
+  $('#mtList').innerHTML=Object.keys(by).map(c=>`<li class="small muted" style="border:0;padding-top:10px"><b style="color:var(--cc)" class="course">${esc(c)}</b></li>`+by[c].map(m=>`<li><input type="checkbox" class="mtsel" id="ms_${m.id}" data-msel="${m.id}" ${matSel.has(m.id)?'checked':''} aria-label="לכלול בצ'אט"><span class="tx"><span class="main">${esc(m.name)}</span><div class="due"><span class="pill gray">${esc(m.kind)}</span> · ${Math.round((m.text||'').length/1000)} אלף תווים${m.gen?' · נוצר בצ׳אט':''}</div><details><summary class="small">הצגת הטקסט</summary><div class="doctext">${esc((m.text||'').slice(0,4000))}${(m.text||'').length>4000?'…':''}</div></details></span><button type="button" class="ghost" data-mdelm="${m.id}" aria-label="מחיקה">✕</button></li>`).join('')).join('')||'<li class="muted">עוד אין קבצים. מעלים מחברת בחינה, פסק דין או סיכום, והם יופיעו כאן.</li>';
+}
+async function addMatFiles(files){
+  const st0=$('#mtStat'); let ok=0,bad=[];
+  for(const f of files){st0.className='gmstat';st0.textContent='קורא את '+f.name+'…';
+    try{const text=(await fileToText(f)).trim(); if(text.length<20) throw new Error('empty');
+      await saveMat({id:uid(),name:f.name,course:$('#mtCourse').value.trim(),kind:$('#mtKind').value,text,added:Date.now()});ok++}
+    catch(e){bad.push(f.name+(e&&e.message==='doc'?' (קובץ ‎.doc‎ ישן: צריך לשמור אותו כ-‎.docx‎ או PDF)':e&&e.message==='empty'?' (לא נמצא בו טקסט. ייתכן שזה PDF סרוק)':''))}}
+  st0.className='gmstat '+(bad.length?'err':'ok');
+  st0.textContent=(ok?`${ok} קבצים נוספו וסומנו לצ'אט.`:'')+(bad.length?' לא הצלחתי לקרוא: '+bad.join(', '):'');
+}
+$('#mtFile').onchange=e=>{addMatFiles([...e.target.files]);e.target.value=''};
+{const d=$('#mtDrop');d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over')});d.addEventListener('dragleave',()=>d.classList.remove('over'));d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');addMatFiles([...e.dataTransfer.files])});}
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.msel){t.checked?matSel.add(t.dataset.msel):matSel.delete(t.dataset.msel)}});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-mdelm]');if(!b)return;const id=b.dataset.mdelm;try{await IDB.del(id)}catch(x){memMats=(memMats||[]).filter(m=>m.id!==id)}matSel.delete(id);await loadMats()});
+
+/* ---------- grounded chat (Claude version only) ---------- */
+let sampleFn=null, chatTurns=[], chatCtl=null;
+const RULES=`את/ה עוזר/ת לימוד לסטודנטית למשפטים. כללים מחייבים:
+1. עונים אך ורק על סמך המקורות שמצורפים למטה. לא משתמשים בידע כללי, ולא משלימים מהזיכרון.
+2. אסור להמציא עובדות, ציטוטים, שמות או מספרי פסקי דין, סעיפים, שנים או מספרי עמודים שלא מופיעים במקורות.
+3. אם התשובה לא מופיעה במקורות, כותבים במפורש: "זה לא מופיע בחומרים שצירפת", ולא מנחשים.
+4. אחרי כל טענה מציינים בסוגריים מרובעים מאיזה מקור היא נלקחה, למשל [מקור 2].
+5. ציטוט מובא רק כלשונו מהמקור, במירכאות.
+6. עונים בעברית, בצורה מסודרת וברורה.`;
+const QUICK={sum:'כתבי סיכום מסודר לפי נושאים של המקורות: לכל נושא, הכלל או ההלכה, הנימוקים העיקריים, ופסקי הדין או הסעיפים שמוזכרים במקורות. ציין מקור לכל נקודה.',
+  cards:'הכיני עד 15 כרטיסיות חזרה, כל אחת בשתי שורות: "ש: ..." ו"ת: ...", רק ממה שמופיע במקורות, עם מקור בסוף כל תשובה.',
+  quiz:'הכיני 5 שאלות תרגול בסגנון מבחן במשפטים, ואחרי כל שאלה תשובה מנומקת שמבוססת רק על המקורות, עם מקור.',
+  exam:'המקורות כוללים מחברת בחינה. זהי אילו סוגיות נבדקו, איך הן נותחו, אילו כללים ופסקי דין שימשו, ומה כדאי לזכור למבחן. רק ממה שכתוב במקורות.'};
+function sourcesText(){
+  const sel=mats.filter(m=>matSel.has(m.id)); if(!sel.length) return null;
+  const budget=95000, per=Math.floor(budget/sel.length); let cut=false;
+  const body=sel.map((m,i)=>{let t=m.text||'';if(t.length>per){t=t.slice(0,per);cut=true}return `<<<מקור ${i+1}: ${m.name} (${m.kind}${m.course?', '+m.course:''})>>>\n${t}\n<<<סוף מקור ${i+1}>>>`}).join('\n\n');
+  return {body,cut,n:sel.length};
+}
+function renderChat(){
+  $('#chatLog').innerHTML=chatTurns.map((t,i)=>`<div class="msg ${t.role==='user'?'u':'a'}">${esc(t.content)}${t.role==='assistant'&&t.done?`<div class="mact"><button type="button" class="linkbtn" data-savechat="${i}">שמירה כחומר</button><button type="button" class="linkbtn" data-copychat="${i}">העתקה</button></div>`:''}</div>`).join('');
+  const lg=$('#chatLog'); lg.scrollTop=lg.scrollHeight;
+}
+async function askChat(q){
+  if(!sampleFn) return;
+  const src=sourcesText(); if(!src){toast('קודם מסמנים לפחות קובץ אחד ברשימה למעלה.');return}
+  chatTurns.push({role:'user',content:q}); const ans={role:'assistant',content:'חושב…',done:false}; chatTurns.push(ans); renderChat();
+  const input=[{role:'user',content:RULES+'\n\nהמקורות:\n\n'+src.body+(src.cut?'\n\n(חלק מהמקורות קוצר בגלל אורך.)':'')}].concat(chatTurns.slice(0,-1).filter(t=>t.content&&t.content!=='חושב…').slice(-8).map(t=>({role:t.role,content:t.content})));
+  chatCtl=new AbortController(); $('#chatStop').hidden=false; $('#chatSend').disabled=true;
+  try{
+    const r=await sampleFn(input,{cache:false,signal:chatCtl.signal,onText:({text})=>{ans.content=text;renderChat()}});
+    ans.content=r.text+(r.truncated?'\n\n(התשובה נקטעה. אפשר לבקש פחות בכל פעם.)':'')+(src.cut?'\n\n(שימי לב: חלק מהקבצים ארוכים מדי ונקראו רק בחלקם.)':''); ans.done=true;
+  }catch(e){
+    const M={not_granted:'לא אושרה הגישה ל-Claude. אפשר לאשר אותה בפעם הבאה שתלחצי.',rate_limited:'הגעת למגבלת השימוש ב-Claude כרגע. נסי שוב מאוחר יותר.',prompt_too_large:'הקבצים שסימנת ארוכים מדי. סמני פחות קבצים.',refused:'Claude לא ענה על הבקשה הזו. נסי לנסח אחרת.',sampling_disabled:'Claude לא זמין לחשבון הזה.',session_expired:'צריך להתחבר שוב ל-claude.ai.'};
+    if(e&&e.code==='cancelled'){ans.content=(e.text||'')+'\n\n(נעצר)';ans.done=!!e.text}
+    else{ans.content=(e&&e.text?e.text+'\n\n':'')+(M[e&&e.code]||'משהו השתבש. נסי שוב בעוד רגע.');ans.done=!!(e&&e.text)}
+  }finally{chatCtl=null;$('#chatStop').hidden=true;$('#chatSend').disabled=false;renderChat()}
+}
+$('#chatForm').onsubmit=e=>{e.preventDefault();const q=$('#chatIn').value.trim();if(!q)return;$('#chatIn').value='';askChat(q)};
+$('#chatStop').onclick=()=>chatCtl&&chatCtl.abort();
+document.addEventListener('click',e=>{
+  const qb=e.target.closest('[data-q]'); if(qb){askChat(QUICK[qb.dataset.q]);return}
+  const sv=e.target.closest('[data-savechat]'); if(sv){const t=chatTurns[+sv.dataset.savechat];const q=chatTurns[+sv.dataset.savechat-1];saveMat({id:uid(),name:'מהצ׳אט: '+(q?q.content.slice(0,40):'תשובה'),course:$('#mtCourse').value.trim(),kind:'סיכום',text:t.content,added:Date.now(),gen:true});toast('נשמר ברשימת החומרים.');return}
+  const cp=e.target.closest('[data-copychat]'); if(cp){const t=chatTurns[+cp.dataset.copychat].content;try{navigator.clipboard.writeText(t).then(()=>toast('הועתק.'),()=>{})}catch(x){}}
+});
+function renderChatAvail(){
+  const on=!!sampleFn;
+  ['#chatQuick','#chatForm','#chatLog'].forEach(s=>$(s).hidden=!on);
+  $('#chatNote').textContent=on?'מסמנים ברשימה למעלה את הקבצים, ושואלים. Claude מונחה לענות רק מתוך הקבצים שסימנת, לציין מאיזה קובץ כל טענה, ולכתוב "זה לא מופיע בחומרים" כשאין תשובה. כדאי לבדוק כל דבר חשוב מול המקור.'
+    :window.claude?'הצ׳אט נטען…':'הצ׳אט עם Claude זמין בגרסה של שעת הדין בתוך claude.ai, כי שם הוא משתמש בחשבון Claude שלך. כאן אפשר להעלות ולשמור חומרים.';
+}
+
+/* ---------- accommodations (התאמות) ---------- */
+const PROF=[{t:'miluim',n:'משרת/ת מילואים',unit:'ימי מילואים בסמסטר',auto:true},{t:'partner',n:'בן/בת זוג של משרת/ת מילואים',unit:'ימי מילואים של בן/בת הזוג'},{t:'state',n:'עובד/ת מדינה'},{t:'parent',n:'הורה / הריון ולידה'},{t:'ld',n:'לקות למידה'},{t:'athlete',n:'ספורטאי/ת מצטיין/ת'},{t:'soldier',n:'חייל/ת בשירות סדיר'},{t:'other',n:'אחר'}];
+function semRange(){
+  const a=st.accom.sem||{}; if(a.from&&a.to) return a;
+  const T=today0(), y=T.getFullYear(), m=T.getMonth()+1;
+  if(m>=10) return {from:y+'-10-15',to:(y+1)+'-02-10'}; if(m<=2) return {from:(y-1)+'-10-15',to:y+'-02-10'};
+  if(m<=7) return {from:y+'-03-01',to:y+'-07-15'}; return {from:y+'-07-16',to:y+'-10-14'};
+}
+function miluimDays(){
+  const {from,to}=semRange(); let n=0;
+  st.constraints.filter(c=>c.kind==='miluim'&&c.from).forEach(c=>{const a=c.from>from?c.from:from,b=(c.to||c.from)<to?(c.to||c.from):to;if(b>=a)n+=diffDays(a,b)+1});
+  return n;
+}
+const accOpen=new Set();
+function profOf(t){const P=st.accom.profiles;return P[t]||(P[t]={on:false,rules:[],doc:null,manual:null,extra:0,used:{}})}
+function renderAccom(){
+  if(!st.accom) return;
+  const sr=semRange(); $('#semFrom').value=sr.from; $('#semTo').value=sr.to;
+  $('#profPick').innerHTML=PROF.map(p=>`<label><input type="checkbox" id="pp_${p.t}" data-prof="${p.t}" ${profOf(p.t).on?'checked':''}>${p.n}</label>`).join('');
+  const on=PROF.filter(p=>profOf(p.t).on);
+  $('#profCards').innerHTML=on.map(p=>{
+    const P=profOf(p.t);
+    const count=p.auto?miluimDays()+(+P.extra||0):(p.unit?(numOrNull(P.manual)??0):null);
+    const fits=r=>count===null||((r.min===''||r.min==null||count>=+r.min)&&(r.max===''||r.max==null||count<=+r.max));
+    const mine=P.rules.filter(fits), other=P.rules.filter(r=>!fits(r));
+    const cnt=p.unit?`<div class="pcount"><div><span class="big">${count}</span><div class="small muted">${p.unit}</div></div>${p.auto?`<span class="small muted">נספר אוטומטית מהמילואים שבאילוצים, בין ${dm(sr.from)} ל-${dm(sr.to)}.</span><label>ימים נוספים שלא בלו״ז<input type="number" min="0" id="pe_${p.t}" data-pextra="${p.t}" value="${P.extra||0}"></label>`:`<label>כמה ימים<input type="number" min="0" id="pm_${p.t}" data-pman="${p.t}" value="${P.manual??''}"></label>`}</div>`:'';
+    const rulesRows=P.rules.map(r=>`<tr><td><input type="number" id="rmin_${r.id}" data-rule="${p.t}|${r.id}|min" value="${r.min??''}" aria-label="מ-"></td><td><input type="number" id="rmax_${r.id}" data-rule="${p.t}|${r.id}|max" value="${r.max??''}" aria-label="עד"></td><td><input class="rt" id="rtx_${r.id}" data-rule="${p.t}|${r.id}|text" value="${esc(r.text)}" aria-label="זכאות"></td><td><button type="button" class="ghost" data-rdel="${p.t}|${r.id}" aria-label="מחיקה">✕</button></td></tr>`).join('');
+    return `<div class="pcard"><div class="spread"><h3>${p.n}</h3>${P.doc?`<span class="pill sheet">מתווה: ${esc(P.doc.name)}</span>`:'<span class="pill warn">עוד לא הוכנס מתווה</span>'}</div>
+      ${cnt}
+      <div><div class="eyebrow">מה מגיע לך${count!==null&&p.unit?` (לפי ${count} ${p.auto?'ימים':''})`:''}</div>
+      ${mine.length?`<ul class="ent">${mine.map(r=>`<li class="${P.used[r.id]?'used':''}"><input type="checkbox" id="pu_${r.id}" data-pused="${p.t}|${r.id}" ${P.used[r.id]?'checked':''} aria-label="מימשתי"><span>${esc(r.text)}</span></li>`).join('')}</ul><p class="small muted" style="margin:4px 0 0">מסמנים מה כבר מימשת.</p>`:`<p class="small muted" style="margin:0">${P.rules.length?'לפי המתווה שהכנסת, אין זכאות בכמות הימים הנוכחית.':'עוד לא הוגדרו זכאויות. מכניסים את המתווה ומוסיפים את הזכאויות שבו למטה.'}</p>`}
+      ${other.length?`<details><summary class="small">זכאויות בכמויות ימים אחרות (${other.length})</summary><ul class="ent" style="margin-top:6px">${other.map(r=>`<li style="background:var(--surface)"><span>${r.min!==''&&r.min!=null?r.min:'0'}${r.max!==''&&r.max!=null?'–'+r.max:'+'} ימים: ${esc(r.text)}</span></li>`).join('')}</ul></details>`:''}</div>
+      <details data-acc="doc_${p.t}" ${accOpen.has('doc_'+p.t)?'open':''}><summary>המתווה</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <label class="drop" style="padding:12px"><input type="file" data-pdoc="${p.t}" accept=".pdf,.docx,.txt,.md"><b>העלאת המתווה או התקנון</b><span>PDF, Word או טקסט</span></label>
+        <textarea rows="3" id="ptx_${p.t}" data-ptext="${p.t}" placeholder="או מדביקים כאן את הטקסט של המתווה"></textarea>
+        ${P.doc?`<div class="doctext">${esc(P.doc.text.slice(0,6000))}${P.doc.text.length>6000?'…':''}</div>`:''}
+        ${P.doc?(sampleFn?`<button type="button" data-pextract="${p.t}">חילוץ הזכאויות מהמתווה עם Claude</button><span class="small muted">Claude מקבל רק את טקסט המתווה, ומונחה לא להוסיף שום זכאות שלא כתובה בו. אחרי החילוץ כדאי לעבור על הטבלה.</span>`:`<span class="small muted">את הזכאויות מכניסים בטבלה למטה לפי המתווה. אפשר גם לשלוח את המתווה ל-Claude בצ׳אט ולבקש שימלא את הטבלה, או להשתמש בחילוץ האוטומטי בגרסה בתוך claude.ai.</span>`):''}
+      </div></details>
+      <details data-acc="rules_${p.t}" ${!P.rules.length||accOpen.has('rules_'+p.t)?'open':''}><summary>הזכאויות לפי המתווה (${P.rules.length})</summary>
+        <div class="tbl"><table class="rules"><thead><tr><th>${p.unit?'מ- (ימים)':'מ-'}</th><th>עד</th><th>מה מגיע</th><th></th></tr></thead><tbody>${rulesRows||'<tr><td colspan="4" class="muted small">אין עדיין שורות.</td></tr>'}</tbody></table></div>
+        <button type="button" data-radd="${p.t}">+ הוספת זכאות</button>
+        <p class="small muted" style="margin:0">${p.unit?'משאירים "מ-" ו"עד" ריקים לזכאות שמגיעה לכולם בקבוצה הזו. למשל: מ-10 עד 19 ימים, מועד מיוחד לכל מבחן.':'זכאויות בלי מספר ימים מוצגות תמיד.'}</p>
+      </details></div>`;
+  }).join('')||'<p class="muted">מסמנים למעלה מה רלוונטי לך, ותופיע כאן כרטיסייה עם מה שמגיע לך.</p>';
+}
+document.addEventListener('toggle',e=>{const d=e.target&&e.target.dataset;if(d&&d.acc){e.target.open?accOpen.add(d.acc):accOpen.delete(d.acc)}},true);
+document.addEventListener('change',async e=>{
+  const t=e.target, d=t.dataset||{};
+  if(d.prof){profOf(d.prof).on=t.checked;save();setTimeout(renderAccom,0);return}
+  if(t.id==='semFrom'||t.id==='semTo'){st.accom.sem={from:$('#semFrom').value,to:$('#semTo').value};save();setTimeout(renderAccom,0);return}
+  if(d.pextra){profOf(d.pextra).extra=+t.value||0;save();setTimeout(renderAccom,0);return}
+  if(d.pman){profOf(d.pman).manual=t.value===''?null:+t.value;save();setTimeout(renderAccom,0);return}
+  if(d.pused){const [pt,id]=d.pused.split('|');profOf(pt).used[id]=t.checked;save();setTimeout(renderAccom,0);return}
+  if(d.rule){const [pt,id,f]=d.rule.split('|');const r=profOf(pt).rules.find(x=>x.id===id);if(r){r[f]=f==='text'?t.value:(t.value===''?'':+t.value);save();setTimeout(renderAccom,0)}return}
+  if(d.ptext){const v=t.value.trim();if(v){profOf(d.ptext).doc={name:'טקסט שהודבק',text:v.slice(0,200000)};save();setTimeout(renderAccom,0)}return}
+  if(d.pdoc&&t.files[0]){const f=t.files[0];try{const text=await fileToText(f);profOf(d.pdoc).doc={name:f.name,text:text.slice(0,200000)};save();setTimeout(renderAccom,0);toast('המתווה נשמר. עכשיו מוסיפים את הזכאויות שבו לטבלה.')}catch(x){toast('לא הצלחתי לקרוא את הקובץ. אפשר להדביק את הטקסט במקום.')}}
+});
+document.addEventListener('click',async e=>{
+  const a=e.target.closest('[data-radd]'); if(a){accOpen.add('rules_'+a.dataset.radd);profOf(a.dataset.radd).rules.push({id:uid(),min:'',max:'',text:''});save();renderAccom();return}
+  const dl=e.target.closest('[data-rdel]'); if(dl){const [pt,id]=dl.dataset.rdel.split('|');const P=profOf(pt);P.rules=P.rules.filter(r=>r.id!==id);delete P.used[id];save();renderAccom();return}
+  const ex=e.target.closest('[data-pextract]'); if(ex&&sampleFn){
+    const pt=ex.dataset.pextract, P=profOf(pt), p=PROF.find(x=>x.t===pt);
+    ex.disabled=true; ex.textContent='Claude קורא את המתווה…';
+    try{
+      const rows=await sampleFn.json(`להלן טקסט של מתווה או תקנון זכויות לסטודנטים בקבוצה "${p.n}". חלצי ממנו את כל הזכאויות שכתובות בו, ורק אותן.
+כללים: אסור להוסיף זכאות שלא כתובה בטקסט במפורש. אסור לשנות מספרים. כשזכאות תלויה במספר ימי שירות, כתבי את הטווח ב-min וב-max (מספרים שלמים, ריק אם אין גבול). כשאינה תלויה, השאירי את min ו-max ריקים.
+החזירי רק מערך JSON של אובייקטים {"min": number|"", "max": number|"", "text": "הזכאות בעברית, קצרה ומדויקת כמו בטקסט"}.
+הטקסט:
+<<<${P.doc.text.slice(0,90000)}>>>`,{cache:false});
+      if(!Array.isArray(rows)||!rows.length) throw {code:'empty'};
+      rows.forEach(r=>{if(r&&r.text) P.rules.push({id:uid(),min:r.min===''||r.min==null?'':+r.min,max:r.max===''||r.max==null?'':+r.max,text:String(r.text).slice(0,300)})});
+      save(); renderAccom(); toast(`נוספו ${rows.length} זכאויות מהמתווה. עברי על הטבלה ובדקי מול המתווה.`);
+    }catch(x){toast(x&&x.code==='not_granted'?'לא אושרה הגישה ל-Claude.':'לא הצלחתי לחלץ זכאויות. אפשר להכניס אותן ידנית בטבלה.');renderAccom()}
+  }
+});
+
 /* ---------- pages ---------- */
-const PAGES=['home','load','exams','topics','constraints','tasks','grades','mail','connect','prefs'];
+const PAGES=['home','load','exams','topics','study','accom','constraints','tasks','grades','mail','connect','prefs'];
 function route(){
   let h=location.hash.slice(1);
   if(h==='privacy') return;
@@ -2431,7 +2710,7 @@ function route(){
 window.addEventListener('hashchange',route);
 route();
 
-render(); checkAlerts(); tickExamDay();
+render(); checkAlerts(); tickExamDay(); renderChatAvail(); loadMats();
 let lastMin=new Date().getMinutes(), lastDay=ymd(today0());
 setInterval(()=>{
   const n=new Date();
