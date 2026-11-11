@@ -243,6 +243,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .brk{padding-inline-start:88px}
   .brand h1{font-size:1.6rem}
 }
+.gimport{display:flex;flex-direction:column;gap:10px}
+.gprev{border:1px solid var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.gprev table{font-size:.86rem}
+.gprev .st-new{color:var(--accent);font-weight:700}
+.gprev .st-upd{color:var(--warn);font-weight:700}
+.pill.sheet{background:color-mix(in srgb,var(--c1) 14%,transparent);color:var(--c1)}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -387,6 +393,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div class="spread"><div><div class="eyebrow">גיליון ציונים</div><h2>ציונים וממוצע</h2></div>
       <div class="gstats" id="gStats"></div></div>
     <p class="muted" style="margin:0">ממלאים נקודות זכות, ציון עבודה ומשקלה, וציון מבחן. כשציון המבחן עוד ריק, מופיע הציון שצריך במבחן כדי להגיע ליעד.</p>
+    <div class="gimport">
+      <label class="drop" id="gDrop"><input type="file" id="gFile" accept=".xlsx,.xls,.csv,.pdf,.txt"><span class="dropicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span><b>העלאת גיליון ציונים</b><span>גוררים לכאן קובץ Excel, CSV או PDF מאתר המכללה, או לוחצים כדי לבחור</span></label>
+      <details class="how"><summary>או להדביק טקסט מאתר המכללה</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <textarea id="gPaste" rows="4" placeholder="מסמנים את טבלת הציונים במערכת המידע, מעתיקים (Ctrl+C) ומדביקים כאן"></textarea>
+          <button type="button" id="gPasteBtn">קריאת הטקסט</button>
+        </div></details>
+      <div id="gPreview"></div>
+    </div>
     <div class="gpa"><label>ממוצע יעד<input type="number" id="gpaTarget" min="0" max="100" step="0.5" placeholder="85"></label><div id="gpaOut" class="muted"></div></div>
     <div class="tbl gtbl"><table>
       <thead><tr><th>קורס</th><th>נ״ז</th><th>ציון עבודה / תרגילים</th><th>משקל העבודה %</th><th>ציון מבחן</th><th>ציון יעד</th><th>ציון סופי</th><th></th></tr></thead>
@@ -1004,6 +1019,7 @@ function gradeCalc(g){
   const w=Math.max(0,Math.min(100,+g.hwW||0))/100;
   const hw=numOrNull(g.hw), ex=numOrNull(g.exam);
   let final=null;
+  if(numOrNull(g.official)!==null) return {final:numOrNull(g.official),need:null,official:true};
   if(w>=1) final=hw;
   else if(w>0){ if(hw!==null&&ex!==null) final=hw*w+ex*(1-w) }
   else final=ex;
@@ -1033,7 +1049,7 @@ function renderGrades(){
     if(c.final!==null){sum+=c.final*(+g.credits||0);cred+=+g.credits||0;if(c.final>=PASS)passed+=+g.credits||0}
     const inp=(f,v,extra)=>`<input type="number" id="g_${g.id}_${f}" data-g="${g.id}" data-f="${f}" value="${v??''}" ${extra||'min="0" max="100"'} aria-label="${f}">`;
     const fin=c.final===null?(c.need?`<span class="need ${c.need.warn?'muted':''}"><span class="pill ${c.need.ok?'ok':c.need.warn?'warn':'gray'}">${esc(c.need.txt)}</span></span>`:'<span class="muted">—</span>')
-      :`<b class="num" style="font-size:1.1rem">${r1(c.final)}</b> <span class="pill ${c.final>=PASS?'ok':'exam'}">${c.final>=PASS?'עבר':'לא עבר'}</span>`;
+      :`<b class="num" style="font-size:1.1rem">${r1(c.final)}</b> <span class="pill ${c.final>=PASS?'ok':'exam'}">${c.final>=PASS?'עבר':'לא עבר'}</span>${c.official?` <span class="pill sheet">מהגיליון</span> <button type="button" class="topicbtn" data-unoff="${g.id}">ביטול</button>`:''}`;
     return `<tr style="--cc:${ccol(g.course)}"><td><input class="cname" type="text" id="g_${g.id}_course" data-g="${g.id}" data-f="course" value="${esc(g.course)}" aria-label="קורס">${g.ex?' <span class="pill ex">דוגמה</span>':''}</td>
       <td>${inp('credits',g.credits,'min="0" max="12" step="0.5"')}</td><td>${inp('hw',g.hw)}</td><td>${inp('hwW',g.hwW)}</td><td>${inp('exam',g.exam)}</td><td>${inp('target',g.target)}</td>
       <td>${fin}</td><td><button class="ghost" type="button" data-delg="${g.id}" aria-label="מחיקה">✕</button></td></tr>`;
@@ -1046,6 +1062,129 @@ function renderGrades(){
   else if(tgt!==null) gout='אין קורסים שעוד מחכים לציון.';
   $('#gpaOut').innerHTML=gout;
   $('#gStats').innerHTML=`<div class="gstat"><b>${avg??'—'}</b><span>ממוצע משוקלל</span></div><div class="gstat"><b>${passed}</b><span>נ״ז שהושלמו</span></div><div class="gstat"><b>${all}</b><span>נ״ז בגיליון</span></div>`;
+}
+
+/* ---------- grade-sheet import ---------- */
+const LIBS={xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',pdfw:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'};
+const libP={};
+function loadLib(k){return libP[k]||(libP[k]=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=LIBS[k];sc.onload=()=>res();sc.onerror=()=>{delete libP[k];rej(new Error('lib'))};document.head.appendChild(sc)}))}
+let gImport=null;
+const normCourse=c=>String(c||'').replace(/["'״׳`]/g,'').replace(/\(.*?\)/g,'').replace(/\b\d{3,}[-\d]*\b/g,'').replace(/\s+/g,' ').trim();
+function cellNum(x,max){const t=String(x??'').trim().replace(',', '.');if(!/^\d{1,3}(\.\d+)?$/.test(t))return null;const n=+t;return n>=0&&n<=max?n:null}
+function fixReversed(rows){
+  let st0=0,en0=0;
+  rows.forEach(r=>r.forEach(c=>String(c).split(/\s+/).forEach(w=>{if(/^[ךםןףץ][א-ת]/.test(w))st0++;if(/[א-ת][ךםןףץ]$/.test(w))en0++})));
+  if(st0<=en0) return rows;
+  return rows.map(r=>r.map(c=>String(c).split('').reverse().join('').replace(/[0-9.]+/g,m=>m.split('').reverse().join(''))));
+}
+function parseGradeRows(rows){
+  rows=rows.map(r=>r.map(c=>String(c??'').replace(/\s+/g,' ').trim())).filter(r=>r.some(Boolean));
+  rows=fixReversed(rows);
+  const skip=/ממוצע|סה"?כ|סך הכל|total|average|נקודות זכות שנצברו/i;
+  let hi=-1,nc=-1,cc=-1,gc=-1;
+  for(let i=0;i<Math.min(rows.length,25)&&hi<0;i++){
+    const r=rows[i];
+    const n=r.findIndex(c=>/שם (ה)?קורס|^קורס$|שם מקצוע|^מקצוע$|course/i.test(c));
+    const g=r.findIndex(c=>/ציון סופי|^סופי$|final/i.test(c));
+    const g2=r.findIndex(c=>/^ציון$|ציון|grade/i.test(c));
+    if(n>=0&&(g>=0||g2>=0)){hi=i;nc=n;gc=g>=0?g:g2;cc=r.findIndex(c=>/נ"?ז|נק"?ז|נקודות|קרדיט|credit|ש"?ש/i.test(c))}
+  }
+  const out=[];
+  const body=hi>=0?rows.slice(hi+1):rows;
+  for(const r of body){
+    let name='',cr=null,gr=null;
+    if(hi>=0){name=r[nc]||'';gr=cellNum(r[gc],100);cr=cc>=0?cellNum(r[cc],20):null}
+    else{
+      const nums=r.map((c,i)=>[i,cellNum(c,100)]).filter(x=>x[1]!==null);
+      const txt=r.filter(c=>/[א-תA-Za-z]{2}/.test(c)&&!/^(מועד|סמסטר|שנה|א|ב|קיץ)\b/.test(c)).sort((a,b)=>b.length-a.length);
+      name=txt[0]||'';
+      const g=nums.filter(x=>Number.isInteger(x[1])&&x[1]>12).pop()||nums.filter(x=>Number.isInteger(x[1])).pop();
+      gr=g?g[1]:null;
+      const c=nums.find(x=>x!==g&&x[1]>0&&x[1]<=12&&Math.abs(x[1]*2-Math.round(x[1]*2))<1e-9);
+      cr=c?c[1]:null;
+    }
+    name=normCourse(name);
+    if(!name||skip.test(name)||gr===null||name.length<2) continue;
+    const prev=out.findIndex(o=>o.course===name);
+    const rec={course:name,credits:cr,grade:gr,on:true};
+    if(prev>=0) out[prev]=rec; else out.push(rec);
+  }
+  return out;
+}
+function matchGrade(name){
+  const n=normCourse(name);
+  return st.grades.find(g=>{const m=normCourse(g.course);return m===n||(m.length>3&&n.includes(m))||(n.length>3&&m.includes(n))});
+}
+function showGradePreview(list,src){
+  if(!list.length){
+    $('#gPreview').innerHTML=`<div class="warnbox">לא מצאתי ציונים ב${src}. נסי להעתיק את טבלת הציונים מאתר המכללה ולהדביק אותה ב"להדביק טקסט". אם זה עדיין לא עובד, שלחי לי צילום מסך של הגיליון (בלי פרטים אישיים) ואתאים את הקריאה.</div>`;
+    gImport=null; return;
+  }
+  gImport=list;
+  const rows=list.map((r,i)=>{const g=matchGrade(r.course);const stt=!g?'<span class="st-new">חדש</span>':(numOrNull(g.official)===r.grade&&(r.credits===null||+g.credits===r.credits))?'<span class="muted">ללא שינוי</span>':'<span class="st-upd">עדכון</span>';
+    return `<tr><td><input type="checkbox" id="gi_${i}" data-gi="${i}" ${r.on?'checked':''} aria-label="לכלול"></td><td>${esc(r.course)}${g&&g.course!==r.course?`<div class="small muted">יעודכן: ${esc(g.course)}</div>`:''}</td><td class="num">${r.credits??'—'}</td><td class="num"><b>${r.grade}</b></td><td>${stt}</td></tr>`}).join('');
+  const onlyEx=st.grades.length&&st.grades.every(g=>g.ex);
+  $('#gPreview').innerHTML=`<div class="gprev"><b>נמצאו ${list.length} קורסים ב${src}. בדקי שהכל נכון:</b>
+    <div class="tbl"><table><thead><tr><th></th><th>קורס</th><th>נ״ז</th><th>ציון</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${onlyEx?'<label class="chk"><input type="checkbox" id="giClearEx" checked>למחוק את קורסי הדוגמה</label>':''}
+    <div class="row"><button type="button" class="primary" data-gapply>עדכון הגיליון</button><button type="button" data-gcancel>ביטול</button></div></div>`;
+}
+function applyGradeImport(){
+  if(!gImport) return;
+  const ce=$('#giClearEx'); if(ce&&ce.checked) st.grades=st.grades.filter(g=>!g.ex);
+  let add=0,upd=0;
+  gImport.forEach((r,i)=>{const box=document.getElementById('gi_'+i); if(box&&!box.checked) return;
+    const g=matchGrade(r.course);
+    if(g){g.official=r.grade; if(r.credits!==null) g.credits=r.credits; upd++}
+    else{st.grades.push({id:uid(),course:r.course,credits:r.credits??0,hw:null,hwW:0,exam:null,target:80,official:r.grade});add++}
+  });
+  gImport=null; $('#gPreview').innerHTML='';
+  save(); render(); toast(`הגיליון עודכן: ${add} קורסים נוספו, ${upd} עודכנו.`);
+}
+async function readGradeFile(f){
+  if(!f) return;
+  const name=f.name.toLowerCase();
+  $('#gPreview').innerHTML='<div class="warnbox">קורא את הקובץ…</div>';
+  try{
+    let rows=[];
+    if(name.endsWith('.pdf')){
+      await loadLib('pdf'); await loadLib('pdfw');
+      pdfjsLib.GlobalWorkerOptions.workerSrc=LIBS.pdfw;
+      const doc=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false}).promise;
+      for(let pg=1;pg<=Math.min(doc.numPages,10);pg++){
+        const tc=await (await doc.getPage(pg)).getTextContent();
+        const lines={};
+        tc.items.forEach(it=>{if(!it.str||!it.str.trim())return;const y=Math.round(it.transform[5]/4);(lines[y]=lines[y]||[]).push(it)});
+        Object.keys(lines).map(Number).sort((a,b)=>b-a).forEach(y=>rows.push(lines[y].sort((a,b)=>b.transform[4]-a.transform[4]).map(it=>it.str.trim())));
+      }
+    }else if(/\.(xlsx|xls)$/.test(name)){
+      await loadLib('xlsx');
+      const wb=XLSX.read(new Uint8Array(await f.arrayBuffer()),{type:'array'});
+      wb.SheetNames.forEach(n=>{rows=rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}))});
+    }else{
+      const buf=await f.arrayBuffer();
+      let txt=new TextDecoder('utf-8').decode(buf);
+      if(txt.includes('�')){try{txt=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
+      rows=textRows(txt,name.endsWith('.csv'));
+    }
+    showGradePreview(parseGradeRows(rows),'קובץ');
+  }catch(e){
+    $('#gPreview').innerHTML='<div class="warnbox">לא הצלחתי לקרוא את הקובץ. אפשר לנסות לשמור אותו מחדש כ-Excel או CSV, או להעתיק את הטבלה ולהדביק אותה ב"להדביק טקסט".</div>';
+  }
+}
+function csvSplit(l,sep){
+  const out=[];let cur='',q=false;
+  for(let i=0;i<l.length;i++){const ch=l[i];
+    if(q){if(ch==='"'&&l[i+1]==='"'){cur+='"';i++}else if(ch==='"'&&(i+1===l.length||l[i+1]===sep)){q=false}else cur+=ch}
+    else if(ch==='"'&&cur===''){q=true}
+    else if(ch===sep){out.push(cur);cur=''}
+    else cur+=ch}
+  out.push(cur);return out;
+}
+function textRows(txt,csv){
+  const lines=txt.replace(/\r/g,'').split('\n');
+  if(csv){const sep=(lines[0].split(';').length>lines[0].split(',').length)?';':',';return lines.map(l=>csvSplit(l,sep))}
+  return lines.map(l=>l.includes('\t')?l.split('\t'):l.split(/\s{2,}|\s\|\s/));
 }
 
 /* ---------- mail digest ---------- */
@@ -1265,7 +1404,7 @@ function goTo(key){
 
 /* ---------- events ---------- */
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
+  const t=ev.target.closest('[data-unoff],[data-gapply],[data-gcancel],[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
   if(!t) return;
   const ds=t.dataset;
   if(ds.edit!==undefined){const i=+ds.edit;editIdx=editIdx===i?null:i;renderDocket();return}
@@ -1275,6 +1414,9 @@ document.addEventListener('click',ev=>{
   if(ds.delg) st.grades=st.grades.filter(g=>g.id!==ds.delg);
   if(ds.delev){st.events=st.events.filter(e=>e.id!==ds.delev);st.manual=st.manual.filter(m=>m.evId!==ds.delev)}
   if(ds.delcon) st.constraints=st.constraints.filter(c=>c.id!==ds.delcon);
+  if(ds.unoff){const g=st.grades.find(x=>x.id===ds.unoff); if(g){delete g.official; toast('הציון מהגיליון בוטל. הציון מחושב שוב מהעבודה והמבחן.')}}
+  if(ds.gcancel!==undefined){gImport=null;$('#gPreview').innerHTML='';return}
+  if(ds.gapply!==undefined){applyGradeImport();return}
   if(ds.topicdone){const [c,id]=ds.topicdone.split('|');const x=(st.topics[c]||[]).find(y=>y.id===id); if(x){x.done=true;toast('הנושא סומן כגמור. הבלוקים הבאים יעברו לנושא הבא.')}}
   if(ds.tpdel){const [c,id]=ds.tpdel.split('|');st.topics[c]=(st.topics[c]||[]).filter(y=>y.id!==id)}
   if(ds.exbdel){const [id,i]=ds.exbdel.split('|');const e=st.events.find(x=>x.id===id); if(e){if(!e.bring)e.bring=BRING.map(t=>({t,done:false}));e.bring.splice(+i,1)}}
@@ -1373,6 +1515,9 @@ document.addEventListener('submit',ev=>{
   }
   editIdx=null; save(); render();
 });
+$('#gFile').onchange=e=>{readGradeFile(e.target.files[0]);e.target.value=''};
+{const gd=$('#gDrop');gd.addEventListener('dragover',e=>{e.preventDefault();gd.classList.add('over')});gd.addEventListener('dragleave',()=>gd.classList.remove('over'));gd.addEventListener('drop',e=>{e.preventDefault();gd.classList.remove('over');readGradeFile(e.dataTransfer&&e.dataTransfer.files[0])});}
+$('#gPasteBtn').onclick=()=>{const t=$('#gPaste').value;if(!t.trim())return;showGradePreview(parseGradeRows(textRows(t)),'טקסט שהודבק')};
 $('#gForm').onsubmit=e=>{e.preventDefault();
   const v=id=>$(id).value===''?null:+$(id).value;
   st.grades.push({id:uid(),course:$('#gCourse').value.trim(),credits:+$('#gCred').value||0,hw:v('#gHw'),hwW:v('#gHwW')||0,exam:v('#gExam'),target:v('#gTarget')??80});
