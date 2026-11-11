@@ -249,6 +249,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .gprev .st-new{color:var(--accent);font-weight:700}
 .gprev .st-upd{color:var(--warn);font-weight:700}
 .pill.sheet{background:color-mix(in srgb,var(--c1) 14%,transparent);color:var(--c1)}
+.gsec{font-size:1.05rem;margin-top:6px}
+.pend{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
+.simout{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap}
+.simout .big{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.simout .lbl{font-size:.78rem;color:var(--muted);display:block}
+.simout .ok{color:var(--ok)}.simout .bad{color:var(--danger)}
+.simcell{display:flex;align-items:center;gap:8px;min-width:190px}
+.simcell input[type=range]{flex:1;accent-color:var(--accent);min-width:110px}
+.simcell b{width:2.4em;text-align:center;font-variant-numeric:tabular-nums}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -403,10 +412,22 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div id="gPreview"></div>
     </div>
     <div class="gpa"><label>ממוצע יעד<input type="number" id="gpaTarget" min="0" max="100" step="0.5" placeholder="85"></label><div id="gpaOut" class="muted"></div></div>
+    <h3 class="gsec">קורסים עם ציון</h3>
     <div class="tbl gtbl"><table>
       <thead><tr><th>קורס</th><th>נ״ז</th><th>ציון עבודה / תרגילים</th><th>משקל העבודה %</th><th>ציון מבחן</th><th>ציון יעד</th><th>ציון סופי</th><th></th></tr></thead>
       <tbody id="gBody"></tbody>
     </table></div>
+
+    <div class="pend">
+      <div class="spread"><div><h3 class="gsec">מחכים לציון</h3><span class="small muted">מזיזים את הציון המשוער של כל קורס ורואים מיד מה יהיה הממוצע. זה לא משנה את הציונים האמיתיים.</span></div>
+        <div class="simout" id="simOut"></div></div>
+      <div class="row"><button type="button" class="primary" id="simFill">למלא לפי ממוצע היעד</button><button type="button" id="simReset">איפוס לציוני היעד</button><span id="fromEvents"></span></div>
+      <div class="tbl gtbl"><table>
+        <thead><tr><th>קורס</th><th>נ״ז</th><th>עבודה</th><th>משקל %</th><th>מה אם: ציון במבחן</th><th>ציון סופי צפוי</th><th></th></tr></thead>
+        <tbody id="gPend"></tbody>
+      </table></div>
+    </div>
+
     <form class="add" id="gForm">
       <label>קורס<input id="gCourse" list="courseList" required placeholder="דיני קניין"></label>
       <label>נ״ז<input type="number" id="gCred" min="0.5" max="12" step="0.5" value="4" required></label>
@@ -415,6 +436,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <label>ציון מבחן<input type="number" id="gExam" min="0" max="100"></label>
       <label>ציון יעד<input type="number" id="gTarget" min="0" max="100" value="80"></label>
       <button class="primary" type="submit">הוספת קורס</button>
+      <p class="small muted wide" style="margin:0">קורס בלי ציון מבחן נכנס לרשימת "מחכים לציון".</p>
     </form>
   </section>
 
@@ -1041,27 +1063,63 @@ function renderTopics(){
       <form data-tpadd="${esc(c)}"><input id="tpadd_${btoa(unescape(encodeURIComponent(c))).replace(/[^a-z0-9]/gi,'')}" placeholder="נושא חדש"><button type="submit">הוספה</button></form></div>`;
   }).join('')||'<p class="muted">אין עדיין קורסים. מוסיפים קורס למטה, או מבחן בעמוד "מבחנים והגשות".</p>';
 }
+function simFinal(g){
+  const w=Math.max(0,Math.min(100,+g.hwW||0))/100, hw=numOrNull(g.hw);
+  let x=numOrNull(g.sim); if(x===null) x=numOrNull(g.target)??85;
+  if(w>0&&w<1&&hw!==null) return hw*w+x*(1-w);
+  return x;
+}
+function gradeTotals(){
+  let sum=0,cred=0,passed=0,all=0,pend=[];
+  (st.grades||[]).forEach(g=>{const c=gradeCalc(g),cr=+g.credits||0;all+=cr;if(c.final!==null){sum+=c.final*cr;cred+=cr;if(c.final>=PASS)passed+=cr}else pend.push(g)});
+  return {sum,cred,passed,all,pend};
+}
+function renderSim(){
+  const {sum,cred,pend}=gradeTotals(), tgt=numOrNull(st.gpaTarget);
+  let ssum=sum,scred=cred;
+  pend.forEach(g=>{const cr=+g.credits||0,f=simFinal(g);ssum+=f*cr;scred+=cr;
+    const out=document.getElementById('simf_'+g.id); if(out) out.innerHTML=`<b class="num">${r1(f)}</b> <span class="pill ${f>=PASS?'ok':'exam'}">${f>=PASS?'עובר':'לא עובר'}</span>`;
+    const v=document.getElementById('simv_'+g.id); if(v) v.textContent=Math.round(numOrNull(g.sim)??numOrNull(g.target)??85)});
+  const now=cred?r1(sum/cred):null, proj=scred?r1(ssum/scred):null;
+  let verdict='';
+  if(tgt!==null&&proj!==null) verdict=proj>=tgt?`<span class="ok">מעל היעד (${tgt}) ✓</span>`:`<span class="bad">חסרות ${r1(tgt-proj)} נק׳ ליעד (${tgt})</span>`;
+  $('#simOut').innerHTML=pend.length?`<div><span class="lbl">ממוצע עכשיו</span><span class="big muted">${now??'—'}</span></div><div><span class="lbl">ממוצע צפוי</span><span class="big">${proj??'—'}</span></div><div class="small">${verdict}</div>`:'';
+}
 function renderGrades(){
   const gs=st.grades||[];
-  let sum=0,cred=0,passed=0,all=0;
-  $('#gBody').innerHTML=gs.map(g=>{
-    const c=gradeCalc(g); all+=+g.credits||0;
-    if(c.final!==null){sum+=c.final*(+g.credits||0);cred+=+g.credits||0;if(c.final>=PASS)passed+=+g.credits||0}
-    const inp=(f,v,extra)=>`<input type="number" id="g_${g.id}_${f}" data-g="${g.id}" data-f="${f}" value="${v??''}" ${extra||'min="0" max="100"'} aria-label="${f}">`;
-    const fin=c.final===null?(c.need?`<span class="need ${c.need.warn?'muted':''}"><span class="pill ${c.need.ok?'ok':c.need.warn?'warn':'gray'}">${esc(c.need.txt)}</span></span>`:'<span class="muted">—</span>')
-      :`<b class="num" style="font-size:1.1rem">${r1(c.final)}</b> <span class="pill ${c.final>=PASS?'ok':'exam'}">${c.final>=PASS?'עבר':'לא עבר'}</span>${c.official?` <span class="pill sheet">מהגיליון</span> <button type="button" class="topicbtn" data-unoff="${g.id}">ביטול</button>`:''}`;
-    return `<tr style="--cc:${ccol(g.course)}"><td><input class="cname" type="text" id="g_${g.id}_course" data-g="${g.id}" data-f="course" value="${esc(g.course)}" aria-label="קורס">${g.ex?' <span class="pill ex">דוגמה</span>':''}</td>
-      <td>${inp('credits',g.credits,'min="0" max="12" step="0.5"')}</td><td>${inp('hw',g.hw)}</td><td>${inp('hwW',g.hwW)}</td><td>${inp('exam',g.exam)}</td><td>${inp('target',g.target)}</td>
+  const {sum,cred,passed,all,pend}=gradeTotals();
+  const inp=(g,f,v,extra)=>`<input type="number" id="g_${g.id}_${f}" data-g="${g.id}" data-f="${f}" value="${v??''}" ${extra||'min="0" max="100"'} aria-label="${f}">`;
+  const nameCell=g=>`<td><input class="cname" type="text" id="g_${g.id}_course" data-g="${g.id}" data-f="course" value="${esc(g.course)}" aria-label="קורס">${g.ex?' <span class="pill ex">דוגמה</span>':''}${!(+g.credits)?' <span class="pill warn">חסר נ״ז</span>':''}</td>`;
+  const done=gs.filter(g=>gradeCalc(g).final!==null);
+  $('#gBody').innerHTML=done.map(g=>{
+    const c=gradeCalc(g);
+    const fin=`<b class="num" style="font-size:1.1rem">${r1(c.final)}</b> <span class="pill ${c.final>=PASS?'ok':'exam'}">${c.final>=PASS?'עבר':'לא עבר'}</span>${c.official?` <span class="pill sheet">מהגיליון</span> <button type="button" class="topicbtn" data-unoff="${g.id}">ביטול</button>`:''}`;
+    return `<tr style="--cc:${ccol(g.course)}">${nameCell(g)}
+      <td>${inp(g,'credits',g.credits,'min="0" max="12" step="0.5"')}</td><td>${inp(g,'hw',g.hw)}</td><td>${inp(g,'hwW',g.hwW)}</td><td>${inp(g,'exam',g.exam)}</td><td>${inp(g,'target',g.target)}</td>
       <td>${fin}</td><td><button class="ghost" type="button" data-delg="${g.id}" aria-label="מחיקה">✕</button></td></tr>`;
-  }).join('')||'<tr><td colspan="8" class="muted">אין קורסים בגיליון. הוסיפו את הראשון למטה.</td></tr>';
+  }).join('')||'<tr><td colspan="8" class="muted">עוד אין קורסים עם ציון. אפשר להעלות גיליון ציונים למעלה.</td></tr>';
+  $('#gPend').innerHTML=pend.map(g=>{
+    const w=+g.hwW||0, sv=Math.round(numOrNull(g.sim)??numOrNull(g.target)??85);
+    const label=w>0&&w<100&&numOrNull(g.hw)!==null?'ציון במבחן':'ציון סופי';
+    return `<tr style="--cc:${ccol(g.course)}">${nameCell(g)}
+      <td>${inp(g,'credits',g.credits,'min="0" max="12" step="0.5"')}</td><td>${inp(g,'hw',g.hw)}</td><td>${inp(g,'hwW',g.hwW)}</td>
+      <td><div class="simcell"><input type="range" min="40" max="100" step="1" id="sim_${g.id}" data-sim="${g.id}" value="${sv}" aria-label="${label} משוער"><b id="simv_${g.id}">${sv}</b></div><span class="small muted">${label}</span></td>
+      <td id="simf_${g.id}"></td><td><button class="ghost" type="button" data-delg="${g.id}" aria-label="מחיקה">✕</button></td></tr>`;
+  }).join('')||'<tr><td colspan="7" class="muted">אין קורסים שמחכים לציון. מוסיפים קורס בטופס למטה, בלי ציון מבחן.</td></tr>';
+  const have=new Set(gs.map(g=>normCourse(g.course)));
+  const tk=ymd(today0());
+  const missing=[...new Set(st.events.filter(e=>e.date>=tk).map(e=>e.course))].filter(c=>c&&!have.has(normCourse(c)));
+  $('#fromEvents').innerHTML=missing.length?`<button type="button" data-addev="1">להוסיף את הקורסים מהמבחנים: ${missing.map(esc).join(', ')}</button>`:'';
+  $('#simFill').hidden=$('#simReset').hidden=!pend.length;
   const avg=cred?r1(sum/cred):null;
   const tgt=numOrNull(st.gpaTarget); $('#gpaTarget').value=st.gpaTarget??'';
-  const remC=gs.filter(g=>gradeCalc(g).final===null).reduce((a,g)=>a+(+g.credits||0),0);
+  const remC=pend.reduce((a,g)=>a+(+g.credits||0),0);
   let gout='';
   if(tgt!==null&&remC>0){const need=(tgt*(cred+remC)-sum)/remC; gout=need>100?`גם עם 100 בכל הקורסים שנותרו לא תגיעי ל-${tgt}. המקסימום האפשרי: <b>${r1((sum+100*remC)/(cred+remC))}</b>.`:need<=0?`הממוצע ${tgt} כבר מובטח.`:`כדי לסיים עם ממוצע ${tgt} צריך בממוצע <b>${Math.ceil(need*10)/10}</b> בקורסים שנותרו (${remC} נ״ז).`}
   else if(tgt!==null) gout='אין קורסים שעוד מחכים לציון.';
   $('#gpaOut').innerHTML=gout;
   $('#gStats').innerHTML=`<div class="gstat"><b>${avg??'—'}</b><span>ממוצע משוקלל</span></div><div class="gstat"><b>${passed}</b><span>נ״ז שהושלמו</span></div><div class="gstat"><b>${all}</b><span>נ״ז בגיליון</span></div>`;
+  renderSim();
 }
 
 /* ---------- grade-sheet import ---------- */
@@ -1434,7 +1492,7 @@ function goTo(key){
 
 /* ---------- events ---------- */
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-unoff],[data-gapply],[data-gcancel],[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
+  const t=ev.target.closest('[data-addev],[data-unoff],[data-gapply],[data-gcancel],[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
   if(!t) return;
   const ds=t.dataset;
   if(ds.edit!==undefined){const i=+ds.edit;editIdx=editIdx===i?null:i;renderDocket();return}
@@ -1444,6 +1502,7 @@ document.addEventListener('click',ev=>{
   if(ds.delg) st.grades=st.grades.filter(g=>g.id!==ds.delg);
   if(ds.delev){st.events=st.events.filter(e=>e.id!==ds.delev);st.manual=st.manual.filter(m=>m.evId!==ds.delev)}
   if(ds.delcon) st.constraints=st.constraints.filter(c=>c.id!==ds.delcon);
+  if(ds.addev){const have=new Set(st.grades.map(g=>normCourse(g.course)));const tk=ymd(today0());[...new Set(st.events.filter(e=>e.date>=tk).map(e=>e.course))].filter(c=>c&&!have.has(normCourse(c))).forEach(c=>st.grades.push({id:uid(),course:c,credits:0,hw:null,hwW:0,exam:null,target:numOrNull(st.gpaTarget)??85}));toast('הקורסים נוספו. כדאי למלא לכל אחד נ״ז.')}
   if(ds.unoff){const g=st.grades.find(x=>x.id===ds.unoff); if(g){delete g.official; toast('הציון מהגיליון בוטל. הציון מחושב שוב מהעבודה והמבחן.')}}
   if(ds.gcancel!==undefined){gImport=null;$('#gPreview').innerHTML='';return}
   if(ds.gapply!==undefined){applyGradeImport();return}
@@ -1548,6 +1607,18 @@ document.addEventListener('submit',ev=>{
 $('#gFile').onchange=e=>{readGradeFile(e.target.files[0]);e.target.value=''};
 {const gd=$('#gDrop');gd.addEventListener('dragover',e=>{e.preventDefault();gd.classList.add('over')});gd.addEventListener('dragleave',()=>gd.classList.remove('over'));gd.addEventListener('drop',e=>{e.preventDefault();gd.classList.remove('over');readGradeFile(e.dataTransfer&&e.dataTransfer.files[0])});}
 $('#gPasteBtn').onclick=()=>{const t=$('#gPaste').value;if(!t.trim())return;showGradePreview(parseGradeRows(textRows(t)),'טקסט שהודבק')};
+document.addEventListener('input',ev=>{const t=ev.target; if(t.dataset&&t.dataset.sim){const g=st.grades.find(x=>x.id===t.dataset.sim); if(g){g.sim=+t.value; renderSim()}}});
+document.addEventListener('change',ev=>{if(ev.target.dataset&&ev.target.dataset.sim) save()});
+$('#simFill').onclick=()=>{
+  const {sum,cred,pend}=gradeTotals(), tgt=numOrNull(st.gpaTarget);
+  if(tgt===null){toast('קודם כותבים ממוצע יעד למעלה.');$('#gpaTarget').focus();return}
+  const remC=pend.reduce((a,g)=>a+(+g.credits||0),0); if(!remC){toast('חסרות נקודות זכות לקורסים שמחכים לציון.');return}
+  const need=(tgt*(cred+remC)-sum)/remC;
+  pend.forEach(g=>{const w=(+g.hwW||0)/100,hw=numOrNull(g.hw);let x=need;if(w>0&&w<1&&hw!==null)x=(need-hw*w)/(1-w);g.sim=Math.max(40,Math.min(100,Math.ceil(x)))});
+  save(); renderGrades();
+  toast(need>100?'גם עם 100 בכולם לא מגיעים ליעד. הצבתי 100 בכל הקורסים.':`הוצבו הציונים שצריך כדי להגיע ל-${tgt}.`);
+};
+$('#simReset').onclick=()=>{gradeTotals().pend.forEach(g=>delete g.sim);save();renderGrades()};
 $('#gForm').onsubmit=e=>{e.preventDefault();
   const v=id=>$(id).value===''?null:+$(id).value;
   st.grades.push({id:uid(),course:$('#gCourse').value.trim(),credits:+$('#gCred').value||0,hw:v('#gHw'),hwW:v('#gHwW')||0,exam:v('#gExam'),target:v('#gTarget')??80});
