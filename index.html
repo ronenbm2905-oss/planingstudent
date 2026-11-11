@@ -1,0 +1,1507 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="לוח דין: מתכנן לימודים ולו״ז לסטודנטים למשפטים.">
+</head>
+<body>
+<title>לוח דין</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: ink-on-paper docket. Header + live alert strip, then week grid (main) beside the day docket (side), then a band of registers: exams, constraints, tasks, college updates, decisions. */
+:root{
+  --bg:#eff1ec; --surface:#fbfcf9; --line:#d6dad0; --ink:#1b2420; --muted:#5a645d;
+  --accent:#1f5b46; --accent-ink:#ffffff; --gold:#9a6d14;
+  --danger:#b23a2e; --warn:#9b5f0c; --ok:#2c7547; --hatch:#e2e5dc;
+  --c1:#2f6fb0; --c2:#b0432f; --c3:#6d4bb0; --c4:#25806a; --c5:#a8721a; --c6:#a33a7a;
+  --display:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --body:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111513; --surface:#1a201d; --line:#2f3832; --ink:#e6ebe5; --muted:#9ba59e;
+  --accent:#62b996; --accent-ink:#0c1410; --gold:#d8aa4c;
+  --danger:#f07e70; --warn:#e3a54c; --ok:#6cc58e; --hatch:#232a26;
+  --c1:#82b4ea; --c2:#ee927b; --c3:#b39df0; --c4:#6fd1b1; --c5:#e7b65e; --c6:#e68ec5;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111513; --surface:#1a201d; --line:#2f3832; --ink:#e6ebe5; --muted:#9ba59e;
+  --accent:#62b996; --accent-ink:#0c1410; --gold:#d8aa4c;
+  --danger:#f07e70; --warn:#e3a54c; --ok:#6cc58e; --hatch:#232a26;
+  --c1:#82b4ea; --c2:#ee927b; --c3:#b39df0; --c4:#6fd1b1; --c5:#e7b65e; --c6:#e68ec5;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;direction:rtl;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;font-weight:700}
+h2{font-size:1.25rem}
+h3{font-size:1.02rem}
+.num{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:2px 6px}
+button.ghost:hover{color:var(--danger)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0}
+textarea{width:100%;resize:vertical}
+label{display:flex;flex-direction:column;gap:3px;font-size:.82rem;color:var(--muted);min-width:0}
+.eyebrow{font-size:.75rem;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spread{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px}
+.brand h1{font-size:2.3rem;font-weight:900;line-height:1}
+.brand p{margin:4px 0 0;color:var(--muted)}
+.clock{font-family:var(--display);font-size:1.15rem}
+
+/* alert strip */
+.alert{display:grid;grid-template-columns:auto 1fr auto;gap:14px 20px;align-items:center;border-radius:12px;padding:14px 18px;background:var(--ink);color:var(--bg)}
+.alert .count{font-family:var(--display);font-size:2rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.alert .what{min-width:0}
+.alert .what b{font-size:1.05rem}
+.alert .now{font-size:.9rem;opacity:.85}
+.alert .sev{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;background:var(--gold);color:var(--ink)}
+.alert .sev.danger{background:var(--danger);color:#fff}
+.alert button{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
+@media (max-width:640px){.alert{grid-template-columns:1fr}}
+
+/* main layout */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+@media (max-width:1000px){.main{grid-template-columns:1fr}}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+@media (max-width:1180px){.week{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}}
+.day{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px;background:var(--bg);cursor:pointer;min-width:0;text-align:right}
+.day:hover{border-color:var(--accent)}
+.day.sel{outline:2px solid var(--accent);outline-offset:-1px}
+.day.today .dname::after{content:"היום";margin-inline-start:6px;font-size:.7rem;background:var(--accent);color:var(--accent-ink);padding:1px 7px;border-radius:99px;font-family:var(--body);font-weight:700;vertical-align:middle}
+.day.past{opacity:.55}
+.dname{font-family:var(--display);font-weight:700;font-size:1rem}
+.ddate{font-size:.8rem;color:var(--muted)}
+.blk{font-size:.78rem;border-radius:6px;padding:4px 6px;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.blk .t{font-variant-numeric:tabular-nums;color:var(--muted);display:block;font-size:.72rem}
+.blk.study{background:color-mix(in srgb,var(--cc) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--cc) 40%,transparent)}
+.blk.study b{color:var(--cc)}
+.blk.fixed{background:repeating-linear-gradient(-45deg,var(--hatch) 0 6px,var(--surface) 6px 12px);border:1px dashed var(--line);color:var(--muted)}
+.blk.fixed.miluim{border-color:var(--gold);color:var(--ink)}
+.blk.exam{background:var(--cc);color:var(--surface);font-weight:700}
+.blk.exam .t{color:inherit;opacity:.85}
+.blk.deadline{border:2px solid var(--cc);color:var(--ink);font-weight:600;background:var(--surface)}
+.blk.rest{background:transparent;border:1px dashed var(--line);color:var(--muted);text-align:center}
+.dsum{font-size:.72rem;color:var(--muted);margin-top:auto;padding-top:4px;border-top:1px solid var(--line)}
+
+/* docket */
+.docket{display:flex;flex-direction:column;gap:0;position:relative}
+.dk{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.dk:last-child{border-bottom:0}
+.dk .tm{font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--muted)}
+.dk .ti{min-width:0}
+.dk .ti small{display:block;color:var(--muted)}
+.dk.done{opacity:.5}
+.dk.nowb{background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:6px;padding-inline:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--cc);margin-inline-end:6px;vertical-align:middle}
+.brk{font-size:.75rem;color:var(--muted);padding:2px 0 2px 0;padding-inline-start:102px}
+
+/* registers */
+.regs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+@media (max-width:900px){.regs{grid-template-columns:1fr}}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{font-size:.74rem;letter-spacing:.05em;color:var(--muted);text-align:right;font-weight:600;border-bottom:1px solid var(--ink);padding:6px 6px}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.exam{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+.pill.submission{background:color-mix(in srgb,var(--c1) 16%,transparent);color:var(--c1)}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.gray{background:var(--hatch);color:var(--muted)}
+.pill.ex{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:600}
+.bar{height:6px;border-radius:9px;background:var(--hatch);overflow:hidden;margin-top:4px;min-width:70px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.bar i.short{background:var(--warn)}
+.course{font-weight:600;color:var(--cc)}
+form.add{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;align-items:end;padding:10px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+form.add .wide{grid-column:1/-1}
+.days-pick{display:flex;flex-wrap:wrap;gap:4px}
+.days-pick label{flex-direction:row;align-items:center;gap:3px;color:var(--ink);font-size:.82rem}
+details summary{cursor:pointer;color:var(--accent);font-weight:600}
+.clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.clist li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line)}
+.clist li:last-child{border-bottom:0}
+.clist .tx{flex:1;min-width:0}
+.clist li.done .tx span.main{text-decoration:line-through;color:var(--muted)}
+.clist input[type=checkbox]{width:18px;height:18px;margin-top:3px;accent-color:var(--accent)}
+.due{font-size:.78rem;color:var(--muted)}
+.due.over{color:var(--danger);font-weight:700}
+.mail{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.mail.irrelevant{opacity:.6}
+.mail .from{font-size:.78rem;color:var(--muted)}
+.mail .sum{font-size:.92rem}
+.mail .sum b{font-family:var(--display)}
+.gmail{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb,var(--c1) 6%,var(--surface))}
+.gmstat{font-size:.88rem}
+.gmstat.err{color:var(--danger)}
+.gmstat.ok{color:var(--ok)}
+.gtbl input{width:4.6em;text-align:center;font-variant-numeric:tabular-nums}
+.gtbl input.cname{width:100%;min-width:9em;text-align:right}
+.gstats{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline}
+.gstat b{font-family:var(--display);font-size:1.9rem;font-weight:900;display:block;line-height:1.1;font-variant-numeric:tabular-nums}
+.gstat span{font-size:.8rem;color:var(--muted)}
+.need{font-size:.84rem}
+.dk{grid-template-columns:92px minmax(0,1fr) auto!important}
+.dk .edit{font-size:.78rem;color:var(--accent);align-self:start}
+.editor{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px solid var(--accent);margin-top:6px}
+.edgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.edgrid .wide{grid-column:1/-1}
+.small{font-size:.8rem;margin:0}
+.blk.study.pin{border-width:2px;border-style:solid;border-color:var(--cc)}
+.steps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:3px;font-size:.88rem}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:3px}
+.seg label{flex-direction:row;align-items:center;gap:0;color:var(--ink);font-size:.84rem;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{padding:4px 12px;border-radius:99px}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.seg input:focus-visible+span{outline:2px solid var(--accent)}
+.blk.class{background:color-mix(in srgb,var(--cc) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--cc) 55%,transparent);color:var(--ink)}
+.blk.class b{color:var(--cc)}
+.blk .meta{display:block;font-size:.72rem;color:var(--muted)}
+.decisions{border:2px solid var(--gold);background:color-mix(in srgb,var(--gold) 7%,var(--surface))}
+.decisions ol{margin:0;padding-inline-start:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 28px}
+@media (max-width:800px){.decisions ol{grid-template-columns:1fr}}
+.decisions li{font-size:.9rem}
+.warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
+.toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
+.toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
+.toast button{background:transparent;color:var(--bg);border:0;padding:0 4px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:in .25s ease-out}@keyframes in{from{transform:translateY(8px);opacity:.3}}}
+.settings{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;align-items:end}
+.chk{flex-direction:row!important;align-items:center;gap:6px!important;color:var(--ink)!important}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">מתכנן לימודים לסטודנטים למשפטים</div>
+      <h1>לוח דין</h1>
+      <p>מבחנים, הגשות, עבודה ומילואים בלוח אחד. הלו״ז נבנה מחדש בכל שינוי.</p>
+    </div>
+    <div class="row">
+      <span class="clock num" id="clock"></span>
+      <button id="btnNotify" type="button">הפעלת התראות מערכת</button>
+      <button id="btnReset" type="button">חזרה לדוגמה</button>
+      <button id="btnClear" type="button">התחלה מאפס</button>
+    </div>
+  </header>
+  <div id="clearConfirm" class="warnbox" hidden>
+    <div class="spread"><span>למחוק את כל המבחנים, האילוצים, המשימות והמיילים ולהתחיל מלוח ריק?</span>
+    <span class="row"><button id="clearYes" class="primary" type="button">כן, למחוק</button><button id="clearNo" type="button">ביטול</button></span></div>
+  </div>
+
+  <section class="alert" id="alert" aria-live="polite"></section>
+
+  <div class="main">
+    <section class="panel">
+      <div class="spread">
+        <div><div class="eyebrow">הלו״ז השבועי</div><h2 id="weekTitle"></h2><p class="small muted">לוחצים על יום, ובצד מופיע סדר היום שלו עם עריכה והוספה.</p></div>
+        <div class="row">
+          <button type="button" id="prevW" aria-label="שבוע קודם">→ שבוע קודם</button>
+          <button type="button" id="thisW">השבוע</button>
+          <button type="button" id="nextW" aria-label="שבוע הבא">שבוע הבא ←</button>
+        </div>
+      </div>
+      <div class="week" id="week"></div>
+      <div id="shortages"></div>
+      <details>
+        <summary>הגדרות זמני לימוד</summary>
+        <div class="settings" style="margin-top:10px">
+          <label>תחילת יום<input type="time" id="sStart"></label>
+          <label>סוף יום<input type="time" id="sEnd"></label>
+          <label>מקס׳ שעות לימוד ביום<input type="number" id="sMax" min="1" max="12" step="0.5"></label>
+          <label>אורך סשן (דק׳)<input type="number" id="sSess" min="30" max="180" step="15"></label>
+          <label>הפסקה (דק׳)<input type="number" id="sBrk" min="0" max="90" step="5"></label>
+          <label class="chk"><input type="checkbox" id="sShab">ללמוד גם בשבת ובשישי אחה״צ</label>
+        </div>
+      </details>
+    </section>
+
+    <aside class="panel">
+      <div><div class="eyebrow">סדר היום</div><h2 id="dayTitle"></h2></div>
+      <div class="docket" id="docket"></div>
+      <div id="dayTasks"></div>
+    </aside>
+  </div>
+
+  <div class="regs">
+    <section class="panel">
+      <div class="spread"><div><div class="eyebrow">יומן מועדים</div><h2>מבחנים והגשות</h2></div></div>
+      <div class="tbl"><table>
+        <thead><tr><th>קורס</th><th>מה</th><th>מתי</th><th>עוד</th><th>שעות בלו״ז</th><th></th></tr></thead>
+        <tbody id="evBody"></tbody>
+      </table></div>
+      <details>
+        <summary>הוספת מבחן או הגשה</summary>
+        <form class="add" id="evForm" style="margin-top:10px">
+          <label>סוג<select id="evKind"><option value="exam">מבחן / בוחן</option><option value="submission">הגשה</option></select></label>
+          <label>קורס<input id="evCourse" list="courseList" required placeholder="דיני קניין"></label>
+          <label class="wide">תיאור<input id="evTitle" required placeholder="מבחן מועד א׳"></label>
+          <label>תאריך<input type="date" id="evDate" required></label>
+          <label>שעה<input type="time" id="evTime" value="09:00" required></label>
+          <label>שעות הכנה נדרשות<input type="number" id="evHours" min="1" max="200" value="20" required></label>
+          <label>קושי<select id="evDiff"><option value="1">קל</option><option value="2" selected>בינוני</option><option value="3">קשה</option></select></label>
+          <button class="primary" type="submit">הוספה ללו״ז</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div><div class="eyebrow">זמן תפוס</div><h2>אילוצי לו״ז</h2></div>
+      <ul class="clist" id="conList"></ul>
+      <details>
+        <summary>הוספת אילוץ</summary>
+        <form class="add" id="conForm" style="margin-top:10px">
+          <label>סוג<select id="conKind"><option value="work">עבודה</option><option value="class">הרצאה / תרגול</option><option value="miluim">מילואים</option><option value="other">אחר</option></select></label>
+          <label class="wide">תיאור<input id="conTitle" required placeholder="משמרת בעבודה"></label>
+          <label>חזרתיות<select id="conMode"><option value="weekly">כל שבוע</option><option value="dates">טווח תאריכים</option></select></label>
+          <div class="wide days-pick" id="conDays"></div>
+          <label class="conDates" hidden>מתאריך<input type="date" id="conFrom"></label>
+          <label class="conDates" hidden>עד תאריך<input type="date" id="conTo"></label>
+          <label class="chk"><input type="checkbox" id="conAll">כל היום</label>
+          <label>משעה<input type="time" id="conStart" value="09:00"></label>
+          <label>עד שעה<input type="time" id="conEnd" value="13:00"></label>
+          <label class="wide conClass" hidden>כיתה<input id="conLoc" placeholder="בניין A, כיתה 204"></label>
+          <label class="wide conClass" hidden>מרצה<input id="conTeacher" placeholder="ד״ר ישראלי"></label>
+          <button class="primary" type="submit">הוספת אילוץ</button>
+        </form>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div class="spread"><div><div class="eyebrow">צ׳ק ליסט</div><h2>משימות</h2></div><span class="muted num" id="taskCount"></span></div>
+      <ul class="clist" id="taskList"></ul>
+      <form class="add" id="taskForm">
+        <label class="wide">משימה חדשה<input id="tkText" required placeholder="לסכם את פרק ההטעיה (סעיף 15 לחוק החוזים)"></label>
+        <label>קורס<input id="tkCourse" list="courseList"></label>
+        <label>עד תאריך<input type="date" id="tkDue"></label>
+        <button class="primary" type="submit">הוספה</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="spread"><div><div class="eyebrow">עדכונים מהמכללה</div><h2>מיילים ואתר המכללה</h2></div><span class="muted" id="syncInfo"></span></div>
+      <div class="gmail" id="moodleBox">
+        <div class="spread"><h3>סנכרון עם Moodle</h3>
+          <div class="seg" role="radiogroup" aria-label="שיטת סנכרון">
+            <label><input type="radio" name="mdMode" id="mdModeFile" value="file"><span>ייבוא קובץ</span></label>
+            <label><input type="radio" name="mdMode" id="mdModeG" value="gcal"><span>אוטומטי דרך Google Calendar</span></label>
+          </div></div>
+        <div id="mdFile">
+          <ol class="steps">
+            <li>נכנסים ל-Moodle של המכללה למינהל ופותחים את <b>לוח השנה</b>.</li>
+            <li>לוחצים <b>ייבוא או ייצוא לוחות שנה</b>, ואז <b>ייצוא לוח שנה</b>.</li>
+            <li>בוחרים <b>כל האירועים</b> ואת התקופה הארוכה ביותר שמוצעת, ולוחצים <b>ייצוא</b>. יורד קובץ ‎.ics‎.</li>
+            <li>בוחרים כאן את הקובץ. כדי לקבל עדכונים חוזרים על זה מדי פעם.</li>
+          </ol>
+          <div class="row">
+            <label style="flex:1 1 220px">קובץ היומן מ-Moodle (אפשר גם לגרור אותו לכאן)<input type="file" id="icsFile"></label>
+            <button type="button" id="icsDemo">סנכרון לדוגמה</button>
+          </div>
+        </div>
+        <div id="mdG" hidden>
+          <ol class="steps">
+            <li>באותו מסך ב-Moodle (<b>ייצוא לוח שנה</b>) לוחצים <b>קבלת כתובת URL ללוח השנה</b> ומעתיקים את הקישור.</li>
+            <li>ב-Google Calendar במחשב: <b>יומנים אחרים</b> ← <b>+</b> ← <b>מכתובת URL</b>, מדביקים ולוחצים <b>הוספת יומן</b>.</li>
+            <li id="gcStep3">ב-claude.ai מחברים את <b>Google Calendar</b>: הגדרות ← Connectors.</li>
+            <li>לוחצים כאן על הכפתור ובוחרים את יומן ה-Moodle. מעכשיו הבדיקה חוזרת כל 30 דקות כשהדף פתוח.</li>
+          </ol>
+          <div class="gmstat" id="gcStat">בודק אם אפשר להתחבר ל-Google Calendar…</div>
+          <div class="row">
+            <label id="gcCalWrap" hidden style="flex:1 1 220px">איזה יומן הוא של Moodle<select id="gcCal"></select></label>
+          </div>
+          <div id="gcExtra" hidden></div>
+          <div class="row">
+            <button type="button" class="primary" id="gcBtn" hidden>סנכרון עם Google Calendar</button>
+          </div>
+        </div>
+        <div id="syncResult"></div>
+      </div>
+      <div class="gmail" id="gmailBox">
+        <div class="spread"><h3>חיבור ל-Gmail</h3><button type="button" class="primary" id="gmBtn" hidden>חיבור ל-Gmail ומשיכת מיילים</button></div>
+        <div class="gmstat" id="gmStat">בודק אם אפשר להתחבר ל-Gmail…</div>
+        <label id="gmFromWrap" hidden>נכנסים רק מיילים מהכתובת הזו (ברירת מחדל: המכללה למינהל)<input id="gmFrom" placeholder="colman.ac.il"></label>
+      </div>
+      <h3>סיכום מיילים רלוונטיים</h3>
+      <div id="mailList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <details>
+        <summary>הדבקת מייל חדש לסיכום</summary>
+        <form id="mailForm" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+          <label>מאת<input id="mFrom" placeholder="מזכירות הפקולטה"></label>
+          <label>נושא<input id="mSubj" required placeholder="שינוי מועד מבחן"></label>
+          <label>תוכן המייל<textarea id="mBody" rows="4" required placeholder="הדביקו כאן את גוף המייל"></textarea></label>
+          <button class="primary" type="submit">סיכום והוספה לתיבה</button>
+        </form>
+      </details>
+    </section>
+  </div>
+
+  <section class="panel" id="gradesPanel">
+    <div class="spread"><div><div class="eyebrow">גיליון ציונים</div><h2>ציונים וממוצע</h2></div>
+      <div class="gstats" id="gStats"></div></div>
+    <p class="muted" style="margin:0">ממלאים נקודות זכות, ציון עבודה ומשקלה, וציון מבחן. כשציון המבחן עוד ריק, מופיע הציון שצריך במבחן כדי להגיע ליעד.</p>
+    <div class="tbl gtbl"><table>
+      <thead><tr><th>קורס</th><th>נ״ז</th><th>ציון עבודה / תרגילים</th><th>משקל העבודה %</th><th>ציון מבחן</th><th>ציון יעד</th><th>ציון סופי</th><th></th></tr></thead>
+      <tbody id="gBody"></tbody>
+    </table></div>
+    <form class="add" id="gForm">
+      <label>קורס<input id="gCourse" list="courseList" required placeholder="דיני קניין"></label>
+      <label>נ״ז<input type="number" id="gCred" min="0.5" max="12" step="0.5" value="4" required></label>
+      <label>ציון עבודה<input type="number" id="gHw" min="0" max="100"></label>
+      <label>משקל העבודה %<input type="number" id="gHwW" min="0" max="100" value="0"></label>
+      <label>ציון מבחן<input type="number" id="gExam" min="0" max="100"></label>
+      <label>ציון יעד<input type="number" id="gTarget" min="0" max="100" value="80"></label>
+      <button class="primary" type="submit">הוספת קורס</button>
+    </form>
+  </section>
+
+  <section class="panel decisions">
+    <div><div class="eyebrow">שקיפות</div><h2>החלטות שקיבלתי לבד</h2></div>
+    <ol>
+      <li><b>חיבור ל-Gmail</b> עובד דרך החיבור של Gmail ב-claude.ai: בלחיצה הראשונה מאשרים גישה, ואז האפליקציה מושכת רק מיילים שנשלחו מכתובת של המכללה (ברירת המחדל colman.ac.il, וכוללת גם את Moodle ואת המזכירות) מ-21 הימים האחרונים. מיילים משולחים אחרים לא נכנסים גם אם הם מזכירים מבחן או מועד. אפשר להסתיר שולח מסוים בכפתור "לא רלוונטי". הבדיקה חוזרת כל 10 דקות כשהדף פתוח. היא רק קוראת מיילים, לא שולחת ולא מוחקת. מי שפותח את הדף בלי Gmail מחובר ב-claude.ai ממשיך להדביק מיילים ידנית.</li>
+      <li><b>סנכרון עם Moodle</b> בשתי דרכים לבחירה: ייבוא ידני של קובץ היומן, או סנכרון אוטומטי דרך Google Calendar שמנוי ליומן של Moodle. הדף לא יכול לפנות ישירות לשרת של Moodle, ולכן הסנכרון האוטומטי עובר דרך Google, ש-Google מרעננת כל כמה שעות. מבחנים והגשות (לפי מילים כמו מבחן, בוחן, הגשה, מטלה, due) נכנסים לטבלת המועדים. שיעורים וכל אירוע אחר עם שעה נכנסים כזמן תפוס, והלימוד מתוכנן סביבם. אירועים של יום שלם בלי שעה מדולגים. ב-Google אפשר לסמן יומנים נוספים, למשל יומן אישי עם מערכת שעות, שגם מהם נלקח זמן תפוס. שיעורים מיובאים מתעדכנים בכל סנכרון, ולכן משנים אותם במקור ולא באפליקציה. הסיכום של המיילים רץ בדפדפן ולא נשלח לשום מקום.</li>
+      <li><b>התראות בזמן אמת</b> מופיעות בפס העליון ובהודעה קופצת: 7 ימים, 3 ימים, יום אחד ו-3 שעות לפני כל מבחן והגשה. התראות מערכת עובדות רק אם הדפדפן מאשר, ורק כשהדף פתוח.</li>
+      <li><b>חלון לימוד</b> 08:00–22:00, עד 6 שעות לימוד ביום, סשנים של 90 דקות עם הפסקות של 30 דקות. אפשר לשנות בהגדרות.</li>
+      <li><b>שבת יום מנוחה</b> וביום שישי לומדים רק עד 14:00. אפשר לבטל בהגדרות.</li>
+      <li><b>יום מבחן:</b> לא לומדים לפניו, שומרים שעה להגעה, ואחריו לכל היותר שעתיים לקורס הבא. מבחן נמשך 3 שעות, בוחן שעתיים.</li>
+      <li><b>סדר עדיפויות:</b> שעות הכנה שנותרו חלקי הימים שנותרו (מועד קרוב מקבל משקל גבוה יותר), כפול רמת הקושי. היום הנוכחי מתוכנן רק מהשעה הנוכחית והלאה. היום שלפני מבחן מוקדש כולו לאותו מבחן.</li>
+      <li><b>שלבי הלמידה</b> משתנים לפי המרחק מהמבחן: קריאה וסיכום, אחר כך הלכות ופסקי דין, אחר כך מבחנים קודמים, ובסוף חזרה ומבחן דמה.</li>
+      <li><b>מילואים חוסמים יום שלם.</b> שעות ההכנה מתפזרות על הימים שלפני ואחרי. כשאין מספיק זמן, הלוח מציג כמה שעות חסרות ולא מוחק כלום.</li>
+      <li><b>ציונים:</b> ציון סופי = ציון העבודה כפול משקלה, ועוד ציון המבחן כפול שאר המשקל. ציון עובר הוא 60. הממוצע משוקלל לפי נקודות זכות ומחושב רק מקורסים שיש להם ציון סופי. בכל פקולטה הכללים קצת שונים, ולכן המשקל והיעד ניתנים לעריכה בכל קורס.</li>
+      <li><b>עריכת הלו״ז:</b> בסדר היום אפשר להוסיף, להזיז, לקבע או להסיר כל בלוק. לימוד שקבעת נשאר במקומו ונספר בשעות ההכנה של הקורס, והאפליקציה מסדרת מסביבו את השאר. פגישה, עבודה או הסרת לימוד נשמרות אוטומטית גם ברשימת האילוצים. כשמשנים אילוץ שחוזר כל שבוע, אפשר לבחור אם השינוי הוא רק ליום הזה או לכל השבועות.</li>
+      <li><b>שתי גרסאות:</b> בתוך claude.ai החיבורים עוברים דרך Claude. בגרסה הציבורית (אתר רגיל, בלי Claude) מתחברים ישירות עם חשבון Google בכפתור "התחברות עם Google". שם יש רק הרשאת קריאה ליומן, ההתחברות נשמרת רק בזיכרון הדף (כשעה), ושום מידע לא עובר לשרת. מיילים בגרסה הציבורית מדביקים ידנית, כי כדי ש-Google תאפשר לכולם גישה ל-Gmail צריך בדיקת אבטחה בתשלום.</li>
+      <li><b>השבוע מתחיל ביום ראשון</b>, כמו בלוח האקדמי בישראל.</li>
+      <li><b>הנתונים נשמרים רק בדפדפן הזה</b> (בלי שרת ובלי משתמש). מי שתקבל את הקישור תראה את הדוגמה ותתחיל לוח משלה.</li>
+      <li><b>הדוגמה מחושבת לפי התאריך של היום</b>, כך שהיא תמיד נראית עדכנית. כל הפריטים לדוגמה מסומנים, ואפשר למחוק הכול ב"התחלה מאפס".</li>
+    </ol>
+  </section>
+</div>
+<datalist id="courseList"></datalist>
+<div class="toasts" id="toasts"></div>
+
+<script>
+(function(){
+/* Public-site config (filled in by tools/build_public_site.py; empty inside Claude) */
+const GOOGLE_CLIENT_ID='131374369230-s4kd69iqme5iordcepbk2ev1ehtgb5ts.apps.googleusercontent.com';
+const GMAIL_DIRECT=false;
+const KEY='luach-din.v1';
+const DAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const DSHORT=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+const CON_LABEL={work:'עבודה',class:'לימודים',miluim:'מילואים',other:'אחר'};
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseYmd=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const toMin=t=>{const p=(t||'00:00').split(':').map(Number);return p[0]*60+(p[1]||0)};
+const fmtMin=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+const dm=s=>{const d=parseYmd(s);return d.getDate()+'/'+(d.getMonth()+1)};
+const diffDays=(a,b)=>Math.round((parseYmd(b)-parseYmd(a))/864e5);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hrs=m=>{const h=m/60;return (Math.round(h*10)/10).toString()};
+
+/* ---------- example data (relative to today) ---------- */
+function seed(){
+  const T=today0(), D=n=>ymd(addDays(T,n));
+  return {
+    settings:{dayStart:'08:00',dayEnd:'22:00',maxHours:6,session:90,brk:30,shabbat:false},
+    events:[
+      {id:uid(),ex:1,kind:'submission',course:'כתיבה משפטית',title:'עבודה: ניתוח ע״א 6821/93 בנק המזרחי',date:D(5),time:'23:59',hours:10,difficulty:2},
+      {id:uid(),ex:1,kind:'exam',course:'דיני חוזים',title:'מבחן מועד א׳',date:D(12),time:'09:00',hours:30,difficulty:3,duration:180},
+      {id:uid(),ex:1,kind:'exam',course:'דיני נזיקין',title:'בוחן אמצע',date:D(19),time:'13:00',hours:12,difficulty:2,duration:120},
+      {id:uid(),ex:1,kind:'exam',course:'משפט פלילי',title:'מבחן מועד א׳',date:D(27),time:'09:00',hours:28,difficulty:3,duration:180}
+    ],
+    constraints:[
+      {id:uid(),ex:1,kind:'work',title:'משרה חלקית במשרד עורכי דין',days:[0,2],start:'09:00',end:'15:00'},
+      {id:uid(),ex:1,kind:'class',title:'דיני חוזים',days:[1],start:'10:00',end:'12:00',location:'בניין A, כיתה 204',teacher:'ד״ר א. לוי'},
+      {id:uid(),ex:1,kind:'class',title:'משפט פלילי',days:[1],start:'12:00',end:'14:00',location:'אולם 1',teacher:'פרופ׳ ר. כהן'},
+      {id:uid(),ex:1,kind:'class',title:'דיני נזיקין',days:[3],start:'10:00',end:'13:00',location:'בניין B, כיתה 112',teacher:'עו״ד מ. פרץ'},
+      {id:uid(),ex:1,kind:'class',title:'תרגול משפט חוקתי',days:[4],start:'16:00',end:'18:00',location:'כיתה 301',teacher:'מתרגלת: ש. דוד'},
+      {id:uid(),ex:1,kind:'other',title:'אימון כושר',days:[0,2,4],start:'19:00',end:'20:00'},
+      {id:uid(),ex:1,kind:'miluim',title:'מילואים',from:D(8),to:D(9),allDay:true}
+    ],
+    tasks:[
+      {id:uid(),ex:1,text:'לקרוא את ע״א 6821/93 בנק המזרחי נ׳ מגדל כפר שיתופי (חלק המהפכה החוקתית)',course:'כתיבה משפטית',due:D(1),done:false},
+      {id:uid(),ex:1,text:'להגיש בקשת התאמות בגין מילואים במערכת המידע',course:'',due:D(2),done:false},
+      {id:uid(),ex:1,text:'לסכם את סעיף 39 לחוק החוזים (תום לב בקיום חוזה)',course:'דיני חוזים',due:D(3),done:false},
+      {id:uid(),ex:1,text:'לבדוק אזכורים בעבודה לפי כללי האזכור האחיד',course:'כתיבה משפטית',due:D(4),done:false},
+      {id:uid(),ex:1,text:'להוריד מבחנים קודמים בדיני חוזים מאתר הפקולטה',course:'דיני חוזים',due:D(0),done:true},
+      {id:uid(),ex:1,text:'לסכם את סעיף 35 לפקודת הנזיקין (רשלנות)',course:'דיני נזיקין',due:D(14),done:false},
+      {id:uid(),ex:1,text:'לסכם את סעיף 20 לחוק העונשין (מחשבה פלילית)',course:'משפט פלילי',due:D(20),done:false}
+    ],
+    inbox:[
+      {id:uid(),ex:1,from:'מזכירות הפקולטה למשפטים',subject:'שינוי מועד: בוחן אמצע בדיני נזיקין',body:'שלום רב, בוחן האמצע בדיני נזיקין יוקדם ליום '+dm(D(17))+' בשעה 13:00 באולם 2. יש להגיע עם תעודה מזהה.',at:D(0)},
+      {id:uid(),ex:1,from:'מרצת הקורס דיני חוזים',subject:'החומר למבחן',body:'החומר למבחן כולל את פרקים 1 עד 6 בסילבוס, כולל ההלכות בעניין תום לב במשא ומתן (סעיף 12). המבחן בדיני חוזים יתקיים כמתוכנן ב-'+dm(D(12))+' בשעה 09:00.',at:D(-1)},
+      {id:uid(),ex:1,from:'דיקנאט הסטודנטים',subject:'התאמות לסטודנטים במילואים',body:'סטודנטים ששירתו במילואים בסמסטר זכאים למועד מיוחד ולהארכת הגשת עבודות עד 14 יום. יש להגיש בקשה דרך מערכת המידע עד '+dm(D(6))+'.',at:D(-1)},
+      {id:uid(),ex:1,from:'אגודת הסטודנטים',subject:'מבצע בקפיטריה',body:'השבוע 20% הנחה על קפה ומאפה לכל בעלי כרטיס סטודנט.',at:D(-2)}
+    ],
+    grades:seedGrades(), manual:[], gmailFrom:'colman.ac.il', gmailV:2, blocked:[],
+    synced:null, alerts:{}
+  };
+}
+function seedGrades(){
+  return [
+    {id:uid(),ex:1,course:'מבוא למשפט',credits:4,hw:null,hwW:0,exam:88,target:80},
+    {id:uid(),ex:1,course:'משפט חוקתי',credits:4,hw:92,hwW:20,exam:81,target:80},
+    {id:uid(),ex:1,course:'כתיבה משפטית',credits:2,hw:94,hwW:100,exam:null,target:85},
+    {id:uid(),ex:1,course:'דיני חוזים',credits:6,hw:90,hwW:20,exam:null,target:85},
+    {id:uid(),ex:1,course:'דיני נזיקין',credits:6,hw:null,hwW:0,exam:null,target:80},
+    {id:uid(),ex:1,course:'משפט פלילי',credits:6,hw:78,hwW:15,exam:null,target:75}
+  ];
+}
+function sampleIcs(){
+  const T=today0(), f=n=>{const d=addDays(T,n);return ''+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())};
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//College LMS//HE',
+   'BEGIN:VEVENT','SUMMARY:הגשת תרגיל 3 - משפט חוקתי','DTSTART:'+f(10)+'T235900','END:VEVENT',
+   'BEGIN:VEVENT','SUMMARY:מבחן מועד א\' - דיני חוזים','DTSTART:'+f(12)+'T090000','END:VEVENT',
+   'BEGIN:VEVENT','SUMMARY:מבחן מועד א\' - סדר דין אזרחי','DTSTART:'+f(34)+'T090000','END:VEVENT',
+   'BEGIN:VEVENT','SUMMARY:הרצאה - דיני קניין','DTSTART:'+f(1)+'T100000','END:VEVENT',
+   'END:VCALENDAR'].join('\r\n');
+}
+
+/* ---------- state ---------- */
+let st;
+try{const raw=localStorage.getItem(KEY); st=raw?JSON.parse(raw):null}catch(e){st=null}
+if(!st||!st.settings) st=seed();
+if(!Array.isArray(st.grades)) st.grades=seedGrades();
+if(!Array.isArray(st.manual)) st.manual=[];
+if(st.gmailV!==2){ st.inbox=(st.inbox||[]).filter(m=>m.src!=='gmail'); if(!st.gmailFrom) st.gmailFrom='colman.ac.il'; st.gmailV=2 }
+if(!Array.isArray(st.blocked)) st.blocked=[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+let weekOffset=0, selDay=ymd(today0()), plan=null;
+
+/* ---------- course colors ---------- */
+function courses(){
+  const s=[];for(const e of st.events) if(e.course&&!s.includes(e.course)) s.push(e.course);
+  for(const t of st.tasks) if(t.course&&!s.includes(t.course)) s.push(t.course);
+  for(const g of (st.grades||[])) if(g.course&&!s.includes(g.course)) s.push(g.course);
+  return s;
+}
+const ccol=c=>{const i=courses().indexOf(c);return i<0?'var(--muted)':'var(--c'+(i%6+1)+')'};
+
+/* ---------- planner ---------- */
+function applies(c,key,dow){
+  if(c.skip&&c.skip.includes(key)) return false;
+  if(c.days) return c.days.includes(dow);
+  if(c.from) return key>=c.from && key<=(c.to||c.from);
+  return false;
+}
+function subtract(range,busy){
+  let free=[range.slice()];
+  for(const [a,b] of busy){
+    const next=[];
+    for(const [x,y] of free){
+      if(b<=x||a>=y){next.push([x,y]);continue}
+      if(a>x) next.push([x,a]);
+      if(b<y) next.push([b,y]);
+    }
+    free=next;
+  }
+  return free.sort((p,q)=>p[0]-q[0]);
+}
+function choose(evs,key){
+  let best=null,bs=-1;
+  for(const e of evs){
+    if(e.rem<=0||e.date<=key) continue;
+    const dl=diffDays(key,e.date);
+    let p=(e.rem/60)/Math.pow(dl,1.7)*(1+0.25*(+e.difficulty||2));
+    if(dl===1) p*=e.kind==='exam'?100:20;
+    if(p>bs){bs=p;best=e}
+  }
+  return best;
+}
+function phase(e,key){
+  const dl=diffDays(key,e.date);
+  if(e.kind==='submission'){
+    if(dl<=1) return 'הגהה, אזכורים והגשה';
+    if(dl<=3) return 'כתיבת טיוטה';
+    return 'מחקר ואיסוף מקורות';
+  }
+  if(dl<=1) return 'חזרה אחרונה ומבחן דמה בתנאי אמת';
+  if(dl<=4) return 'פתרון מבחנים קודמים';
+  if(dl<=10) return 'הלכות ופסקי דין מרכזיים';
+  return 'קריאת חומר ובניית סיכום';
+}
+function buildPlan(){
+  const s=st.settings, T=today0(), tk=ymd(T);
+  const evs=st.events.filter(e=>e.date>=tk).map(e=>Object.assign({},e,{rem:(+e.hours||0)*60,planned:0}));
+  const evMap={}; for(const e of evs) evMap[e.id]=e;
+  for(const m of st.manual||[]){ if(m.date<tk) continue; const e=evMap[m.evId]; if(e){const len=toMin(m.end)-toMin(m.start); e.rem-=len; e.planned+=len} }
+  const ws0=addDays(T,-T.getDay()+weekOffset*7+6);
+  let last=ymd(ws0);
+  for(const e of evs) if(e.date>last) last=e.date;
+  const horizon=Math.min(120,Math.max(0,diffDays(tk,last)));
+  const days={};
+  for(let i=0;i<=horizon;i++){
+    const d=addDays(T,i), key=ymd(d), dow=d.getDay();
+    let ws=toMin(s.dayStart), we=toMin(s.dayEnd);
+    const blocks=[], busy=[];
+    let budget=(+s.maxHours||6)*60;
+    for(const m of st.manual||[]){
+      if(m.date!==key) continue;
+      const a=toMin(m.start), b=toMin(m.end), e=evMap[m.evId]||null;
+      blocks.push({type:'study',manual:m.id,ev:e,start:a,end:b,title:m.note||(e?phase(e,key):'לימוד'),course:e?e.course:(m.course||'לימוד')});
+      busy.push([a,b]); budget-=(b-a);
+    }
+    for(const c of st.constraints){
+      if(!applies(c,key,dow)) continue;
+      const a=c.allDay?ws:toMin(c.start), b=c.allDay?we:toMin(c.end);
+      blocks.push({type:'fixed',cid:c.id,kind:c.kind,title:c.title,start:a,end:b,allDay:!!c.allDay,location:c.location||'',teacher:c.teacher||''});
+      busy.push([a,b]);
+    }
+    let examEnd=null;
+    for(const e of evs){
+      if(e.date!==key) continue;
+      if(e.kind==='exam'){
+        const a=toMin(e.time), b=a+(+e.duration||180);
+        blocks.push({type:'exam',ev:e,start:a,end:b,title:e.title,course:e.course});
+        busy.push([a-60,b]); examEnd=Math.max(examEnd||0,b);
+      } else blocks.push({type:'deadline',ev:e,start:toMin(e.time),end:toMin(e.time),title:e.title,course:e.course});
+    }
+    let rest=false;
+    if(!s.shabbat){ if(dow===6) rest=true; if(dow===5) we=Math.min(we,toMin('14:00')); }
+    if(i===0){const n=new Date();ws=Math.max(ws,Math.ceil((n.getHours()*60+n.getMinutes())/30)*30)}
+    if(examEnd!==null){ ws=Math.max(ws,examEnd+60); budget=Math.min(budget,120); }
+    if(!rest && ws<we){
+      for(const [a,b] of subtract([ws,we],busy)){
+        let t=a;
+        while(budget>=45 && b-t>=45){
+          const pick=choose(evs,key); if(!pick) break;
+          let len=Math.min(+s.session||90,b-t,budget);
+          if(pick.rem<len) len=Math.max(30,Math.ceil(pick.rem/15)*15);
+          if(len>b-t) len=b-t;
+          blocks.push({type:'study',ev:pick,start:t,end:t+len,title:phase(pick,key),course:pick.course});
+          pick.rem-=len; pick.planned+=len; budget-=len; t+=len+(+s.brk||0);
+        }
+      }
+    }
+    blocks.sort((x,y)=>(y.allDay?1:0)-(x.allDay?1:0)||x.start-y.start);
+    days[key]={key,date:d,blocks,rest};
+  }
+  const byId={}; for(const e of evs) byId[e.id]=e;
+  return {days,byId};
+}
+
+/* ---------- rendering ---------- */
+function blockHtml(b){
+  const cc=b.course?ccol(b.course):'var(--muted)';
+  const time=b.allDay?'כל היום':(b.type==='deadline'?'עד '+fmtMin(b.start):fmtMin(b.start)+'–'+fmtMin(b.end));
+  if(b.type==='study') return `<div class="blk study${b.manual?' pin':''}" style="--cc:${cc}"><span class="t">${time}</span><b>${esc(b.course)}</b> · ${esc(b.title)}</div>`;
+  if(b.type==='exam') return `<div class="blk exam" style="--cc:${cc}"><span class="t">${time}</span>${esc(b.title)}: ${esc(b.course)}</div>`;
+  if(b.type==='deadline') return `<div class="blk deadline" style="--cc:${cc}"><span class="t">הגשה ${time}</span>${esc(b.course)}</div>`;
+  if(b.kind==='class'){
+    const cc2=classColor(b.title);
+    const meta=[b.location,b.teacher].filter(Boolean).map(esc).join(' · ');
+    return `<div class="blk class" style="--cc:${cc2}"><span class="t">${time}</span><b>${esc(b.title)}</b>${meta?`<span class="meta">${meta}</span>`:''}</div>`;
+  }
+  return `<div class="blk fixed ${b.kind}"><span class="t">${time}</span>${esc(b.title)}</div>`;
+}
+function classColor(title){const c=courses().find(x=>String(title).includes(x));return c?ccol(c):'var(--accent)'}
+function renderWeek(){
+  const T=today0(), tk=ymd(T);
+  const start=addDays(T,-T.getDay()+weekOffset*7);
+  const end=addDays(start,6);
+  $('#weekTitle').textContent=start.getDate()+'/'+(start.getMonth()+1)+' עד '+end.getDate()+'/'+(end.getMonth()+1)+'/'+end.getFullYear();
+  let h='';
+  for(let i=0;i<7;i++){
+    const d=addDays(start,i), key=ymd(d), day=plan.days[key];
+    const cls=['day']; if(key===tk) cls.push('today'); if(key<tk) cls.push('past'); if(key===selDay) cls.push('sel');
+    let inner='';
+    if(key<tk) inner='<div class="blk rest">יום שעבר</div>';
+    else if(day){
+      inner=day.blocks.map(blockHtml).join('');
+      if(day.rest) inner+='<div class="blk rest">מנוחה</div>';
+      const sm=day.blocks.filter(b=>b.type==='study').reduce((a,b)=>a+b.end-b.start,0);
+      inner+=`<div class="dsum num">${sm?hrs(sm)+' ש׳ לימוד':'ללא לימוד'}</div>`;
+    }
+    h+=`<button type="button" class="${cls.join(' ')}" data-day="${key}"><span class="dname">${DAYS[d.getDay()]}</span><span class="ddate num">${d.getDate()}/${d.getMonth()+1}</span>${inner}</button>`;
+  }
+  $('#week').innerHTML=h;
+  const short=Object.values(plan.byId).filter(e=>e.rem>0);
+  $('#shortages').innerHTML=short.length?`<div class="warnbox"><b>אין מספיק זמן פנוי:</b> ${short.map(e=>`${esc(e.course)} (חסרות ${hrs(e.rem)} ש׳)`).join(' · ')}. אפשר להגדיל את מקסימום השעות ביום, ללמוד בשישי, או להוריד שעות הכנה.</div>`:'';
+}
+let docketRows=[], editIdx=null;
+function evOptions(sel){
+  const t=ymd(today0());
+  return st.events.filter(e=>e.date>=t).sort((x,y)=>x.date.localeCompare(y.date)).map(e=>`<option value="${e.id}" ${e.id===sel?'selected':''}>${esc(e.course)}: ${esc(e.title)} (${dm(e.date)})</option>`).join('');
+}
+function editorHtml(b){
+  const tm=(id,val)=>`<input type="time" id="${id}" value="${val}">`;
+  const btns=(extra)=>`<div class="row"><button class="primary" data-edact="save" type="button">שמירה</button>${extra}<button class="ghost" data-edact="cancel" type="button">ביטול</button></div>`;
+  if(b.type==='study'){
+    const m=b.manual?st.manual.find(x=>x.id===b.manual):null;
+    const opts=evOptions(b.ev&&b.ev.id);
+    return `<div class="editor"><div class="eyebrow">${m?'לימוד שקבעת':'לימוד שהאפליקציה קבעה'}</div>
+      <div class="edgrid">${opts?`<label class="wide">קורס<select id="edEv">${opts}</select></label>`:''}
+      <label>משעה${tm('edStart',fmtMin(b.start))}</label><label>עד שעה${tm('edEnd',fmtMin(b.end))}</label>
+      <label class="wide">מה לומדים (לא חובה)<input id="edNote" value="${esc(m&&m.note||'')}" placeholder="${esc(b.title)}"></label></div>
+      ${btns(`<button data-edact="remove" type="button">${m?'מחיקה':'הסרה מהיום הזה'}</button>`)}
+      ${m?'':'<p class="small muted">שמירה קובעת את הבלוק במקום ובשעות שבחרת. הסרה שומרת את השעה כזמן חופשי ברשימת האילוצים, ושעות הלימוד עוברות לזמן אחר.</p>'}</div>`;
+  }
+  if(b.type==='fixed'){
+    const c=st.constraints.find(x=>x.id===b.cid)||{};
+    const multi=!!c.days||(c.from&&c.to&&c.from!==c.to);
+    return `<div class="editor"><div class="eyebrow">אילוץ: ${CON_LABEL[c.kind]||''}</div>
+      <div class="edgrid"><label class="wide">תיאור<input id="edTitle" value="${esc(c.title||'')}"></label>
+      <label>משעה${tm('edStart',c.start||fmtMin(b.start))}</label><label>עד שעה${tm('edEnd',c.end||fmtMin(b.end))}</label>
+      <label class="chk"><input type="checkbox" id="edAll" ${c.allDay?'checked':''}>כל היום</label>
+      ${c.kind==='class'?`<label class="wide">כיתה<input id="edLoc" value="${esc(c.location||'')}" placeholder="בניין A, כיתה 204"></label><label class="wide">מרצה<input id="edTeacher" value="${esc(c.teacher||'')}" placeholder="ד״ר ישראלי"></label>`:''}</div>
+      ${c.src?'<p class="small muted">השיעור הזה מגיע מיומן. שינוי כאן יידרס בסנכרון הבא, ולכן עדיף לשנות אותו במקור.</p>':''}
+      ${multi?`<div class="row"><label class="chk"><input type="radio" name="edScope" id="edScopeDay" value="day" checked>רק ביום הזה</label><label class="chk"><input type="radio" name="edScope" id="edScopeAll" value="all">${c.days?'בכל השבועות':'בכל הימים של האילוץ'}</label></div>`:''}
+      ${btns(`<button data-edact="skip" type="button">ביטול ביום הזה</button>${multi?'<button data-edact="delall" type="button">מחיקת האילוץ לגמרי</button>':''}`)}</div>`;
+  }
+  return `<div class="editor"><div class="eyebrow">${b.type==='exam'?'מבחן':'הגשה'}: ${esc(b.course)}</div>
+    <div class="edgrid"><label class="wide">תיאור<input id="edTitle" value="${esc(b.ev.title)}"></label>
+    <label>תאריך<input type="date" id="edDate" value="${b.ev.date}"></label><label>שעה${tm('edTime',b.ev.time)}</label></div>
+    ${btns('<button data-edact="delev" type="button">מחיקה מהלו״ז</button>')}</div>`;
+}
+function addFormHtml(){
+  const opts=evOptions();
+  return `<details id="addDayWrap"><summary>+ הוספה ליום הזה</summary>
+    <form id="addDay" class="editor">
+      <div class="edgrid">
+        <label class="wide">מה מוסיפים<select id="adType">${opts?'<option value="study">לימוד לקורס</option>':''}<option value="other">פגישה, תור או אחר</option><option value="work">עבודה</option><option value="class">הרצאה או תרגול</option><option value="miluim">מילואים</option></select></label>
+        ${opts?`<label class="wide adStudy">קורס<select id="adEv">${opts}</select></label>`:''}
+        <label class="wide adCon" ${opts?'hidden':''}>תיאור<input id="adTitle" placeholder="תור לרופא"></label>
+        <label>משעה<input type="time" id="adStart" value="16:00" required></label>
+        <label>עד שעה<input type="time" id="adEnd" value="17:30" required></label>
+        <label class="wide adClass" hidden>כיתה<input id="adLoc" placeholder="בניין A, כיתה 204"></label>
+        <label class="wide adClass" hidden>מרצה<input id="adTeacher" placeholder="ד״ר ישראלי"></label>
+        <label class="chk wide adCon" ${opts?'hidden':''}><input type="checkbox" id="adWeekly">חוזר כל שבוע ביום ${DAYS[parseYmd(selDay).getDay()]}</label>
+      </div>
+      <button class="primary" type="submit">הוספה ללו״ז</button>
+      <p class="small muted">לימוד נקבע במקום ונספר בשעות ההכנה. פגישה, עבודה, הרצאה ומילואים נוספים גם לרשימת האילוצים.</p>
+    </form></details>`;
+}
+function renderDocket(){
+  const d=parseYmd(selDay), tk=ymd(today0());
+  $('#dayTitle').textContent='יום '+DAYS[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1);
+  const day=plan.days[selDay];
+  const now=new Date(), nm=now.getHours()*60+now.getMinutes();
+  let h='';
+  docketRows=[];
+  if(selDay<tk) h='<p class="muted">היום הזה כבר עבר.</p>';
+  else if(!day) h='<p class="muted">אין נתונים ליום הזה.</p>';
+  else{
+    const all=day.blocks.filter(b=>b.allDay), bl=day.blocks.filter(b=>!b.allDay);
+    docketRows=all.concat(bl);
+    const editBtn=i=>`<button type="button" class="ghost edit" data-edit="${i}">${editIdx===i?'סגירה':'עריכה'}</button>`;
+    all.forEach((b,i)=>{
+      h+=`<div class="dk"><span class="tm">כל היום</span><span class="ti"><b>${esc(b.title)}</b><small>${CON_LABEL[b.kind]||''}</small></span>${editBtn(i)}${editIdx===i?editorHtml(b):''}</div>`;
+    });
+    if(day.rest) h+='<div class="dk"><span class="tm">כל היום</span><span class="ti"><b>מנוחה</b><small>אין לימוד מתוכנן. אפשר לבטל בהגדרות זמני לימוד.</small></span><span></span></div>';
+    let prevEnd=null;
+    bl.forEach((b,j)=>{
+      const i=all.length+j;
+      if(prevEnd!==null && b.type==='study' && b.start>prevEnd && b.start-prevEnd<=60) h+=`<div class="brk">הפסקה ${b.start-prevEnd} דק׳</div>`;
+      const isToday=selDay===tk, done=isToday&&b.end<nm&&b.type!=='deadline', cur=isToday&&b.start<=nm&&nm<b.end;
+      const cc=b.course?ccol(b.course):'var(--muted)';
+      const time=b.type==='deadline'?'עד '+fmtMin(b.start):fmtMin(b.start)+'–'+fmtMin(b.end);
+      let title,sub;
+      if(b.type==='study'){title=`<span class="dot" style="--cc:${cc}"></span>${esc(b.course)}`;sub=esc(b.title)+(b.ev?' · לקראת '+esc(b.ev.title)+' ('+dm(b.ev.date)+')':'')+(b.manual?' · נקבע ידנית':'')}
+      else if(b.type==='exam'){title=`<span class="dot" style="--cc:${cc}"></span>${esc(b.title)}: ${esc(b.course)}`;sub='בהצלחה! להגיע שעה לפני.'}
+      else if(b.type==='deadline'){title=`<span class="dot" style="--cc:${cc}"></span>הגשה: ${esc(b.course)}`;sub=esc(b.title)}
+      else if(b.kind==='class'){title=`<span class="dot" style="--cc:${classColor(b.title)}"></span>${esc(b.title)}`;sub=['שיעור',b.location&&('כיתה: '+esc(b.location)),b.teacher&&('מרצה: '+esc(b.teacher))].filter(Boolean).join(' · ')}
+      else {title=esc(b.title);sub=CON_LABEL[b.kind]||''}
+      h+=`<div class="dk${done&&editIdx!==i?' done':''}${cur?' nowb':''}"><span class="tm">${time}${cur?'<br><b>עכשיו</b>':''}</span><span class="ti"><b>${title}</b><small>${sub}</small></span>${editBtn(i)}${editIdx===i?editorHtml(b):''}</div>`;
+      if(b.type!=='deadline') prevEnd=b.end;
+    });
+    if(!docketRows.length&&!day.rest) h='<p class="muted">יום פנוי. אפשר להוסיף לו לימוד או פגישה.</p>';
+    h+=addFormHtml();
+  }
+  $('#docket').innerHTML=h;
+  const dt=st.tasks.filter(t=>!t.done&&t.due===selDay);
+  $('#dayTasks').innerHTML=dt.length?`<div><div class="eyebrow">משימות ליום הזה</div><ul class="clist">${dt.map(t=>`<li><span class="tx">${esc(t.text)}</span></li>`).join('')}</ul></div>`:'';
+}
+function doEdit(act){
+  const b=docketRows[editIdx];
+  if(act==='cancel'||!b){editIdx=null;renderDocket();return}
+  const v=id=>{const el=document.getElementById(id);return el?el.value:''};
+  const okTimes=()=>{if(toMin(v('edEnd'))<=toMin(v('edStart'))){toast('שעת הסיום צריכה להיות אחרי שעת ההתחלה.');return false}return true};
+  if(b.type==='study'){
+    if(act==='save'){
+      if(!okTimes()) return;
+      const rec={date:selDay,start:v('edStart'),end:v('edEnd'),evId:v('edEv')||(b.ev&&b.ev.id)||'',note:v('edNote').trim()};
+      if(b.manual) Object.assign(st.manual.find(m=>m.id===b.manual),rec); else st.manual.push(Object.assign({id:uid()},rec));
+      toast('הבלוק נקבע. שאר שעות הלימוד סודרו מחדש.');
+    }
+    if(act==='remove'){
+      if(b.manual){st.manual=st.manual.filter(m=>m.id!==b.manual);toast('הבלוק נמחק.')}
+      else{st.constraints.push({id:uid(),kind:'other',title:'זמן חופשי (לימוד שהוסר)',from:selDay,to:selDay,start:fmtMin(b.start),end:fmtMin(b.end)});toast('הלימוד הוסר. השעה נשמרה כזמן חופשי באילוצים, והשעות עברו לזמן אחר.')}
+    }
+  }
+  if(b.type==='fixed'){
+    const c=st.constraints.find(x=>x.id===b.cid); if(!c) return;
+    const multi=!!c.days||(c.from&&c.to&&c.from!==c.to);
+    const sc=document.querySelector('input[name="edScope"]:checked');
+    const scope=multi?(sc?sc.value:'day'):'all';
+    if(act==='save'){
+      const allDay=document.getElementById('edAll').checked;
+      if(!allDay&&!okTimes()) return;
+      const vals={title:v('edTitle').trim()||c.title,start:v('edStart'),end:v('edEnd'),allDay};
+      if(c.kind==='class'){vals.location=v('edLoc').trim();vals.teacher=v('edTeacher').trim()}
+      if(scope==='all') Object.assign(c,vals);
+      else{c.skip=(c.skip||[]).concat(selDay);st.constraints.push(Object.assign({id:uid(),kind:c.kind,from:selDay,to:selDay},vals))}
+      toast(scope==='all'?'האילוץ עודכן.':'האילוץ עודכן ליום הזה בלבד.');
+    }
+    if(act==='skip'){
+      if(multi) c.skip=(c.skip||[]).concat(selDay); else st.constraints=st.constraints.filter(x=>x.id!==c.id);
+      toast('האילוץ בוטל ליום הזה. הזמן התפנה ללימוד.');
+    }
+    if(act==='delall'){st.constraints=st.constraints.filter(x=>x.id!==c.id);toast('האילוץ נמחק מכל הימים.')}
+  }
+  if(b.type==='exam'||b.type==='deadline'){
+    const e=st.events.find(x=>x.id===b.ev.id); if(!e) return;
+    if(act==='save'){e.date=v('edDate')||e.date;e.time=v('edTime')||e.time;e.title=v('edTitle').trim()||e.title;toast('המועד עודכן והלו״ז חושב מחדש.')}
+    if(act==='delev'){st.events=st.events.filter(x=>x.id!==e.id);st.manual=st.manual.filter(m=>m.evId!==e.id);toast('נמחק מהלו״ז.')}
+  }
+  editIdx=null; save(); render();
+}
+function countdown(e){
+  const at=parseYmd(e.date); const m=toMin(e.time); at.setHours(Math.floor(m/60),m%60,0,0);
+  return at-new Date();
+}
+function cdText(ms){
+  if(ms<=0) return 'עבר';
+  const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4);
+  return d>0?`${d} ימים, ${h} ש׳`:`${h} ש׳ ${m} דק׳`;
+}
+function renderEvents(){
+  const list=st.events.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  $('#evBody').innerHTML=list.map(e=>{
+    const p=plan.byId[e.id], ms=countdown(e);
+    const need=(+e.hours||0)*60, got=p?p.planned:0, pct=need?Math.min(100,got/need*100):100;
+    const short=p&&p.rem>0;
+    return `<tr style="--cc:${ccol(e.course)}"><td><span class="course">${esc(e.course)}</span>${e.ex?' <span class="pill ex">דוגמה</span>':''}</td>
+      <td><span class="pill ${e.kind}">${e.kind==='exam'?'מבחן':'הגשה'}</span> ${esc(e.title)}</td>
+      <td class="num">${dm(e.date)} ${e.time}</td>
+      <td class="num">${ms>0?cdText(ms):'<span class="muted">עבר</span>'}</td>
+      <td class="num">${p?`${hrs(got)} / ${e.hours} <span class="pill ${short?'warn':'ok'}">${short?'חסר':'מכוסה'}</span><div class="bar"><i class="${short?'short':''}" style="width:${pct}%"></i></div>`:'<span class="muted">—</span>'}</td>
+      <td><button class="ghost" type="button" data-delev="${e.id}" aria-label="מחיקה">✕</button></td></tr>`;
+  }).join('')||'<tr><td colspan="6" class="muted">אין מבחנים או הגשות. הוסיפו את הראשון למטה.</td></tr>';
+  $('#courseList').innerHTML=courses().map(c=>`<option value="${esc(c)}">`).join('');
+}
+function renderConstraints(){
+  const tk=ymd(today0());
+  const imp=st.constraints.filter(c=>c.src), own=st.constraints.filter(c=>!c.src);
+  const groups={ics:'מקובץ ה-Moodle',gcal:'מיומן ה-Moodle ב-Google',  'gcal-extra':'מהיומנים הנוספים ב-Google'};
+  const impHtml=Object.keys(groups).map(g=>{const list=imp.filter(c=>c.src===g&&c.from>=tk); if(!list.length) return '';
+    const titles=[...new Set(list.map(c=>c.title))].slice(0,6).map(esc).join(', ');
+    return `<li><span class="pill gray">מיובא</span><span class="tx"><span class="main">${list.length} שיעורים ואירועים ${groups[g]}</span><div class="due">${titles}${list.length>6?'…':''} · מתעדכן בכל סנכרון</div></span><button class="ghost" type="button" data-delsrc="${g}" aria-label="מחיקה">✕</button></li>`}).join('');
+  $('#conList').innerHTML=impHtml+own.map(c=>{
+    const when=c.days?c.days.slice().sort().map(d=>DSHORT[d]).join(', '):(dm(c.from)+(c.to&&c.to!==c.from?'–'+dm(c.to):''));
+    const time=c.allDay?'כל היום':c.start+'–'+c.end;
+    return `<li><span class="pill gray">${CON_LABEL[c.kind]}</span><span class="tx"><span class="main">${esc(c.title)}</span>${c.ex?' <span class="pill ex">דוגמה</span>':''}<div class="due num">${when} · ${time}${c.location?' · '+esc(c.location):''}${c.teacher?' · '+esc(c.teacher):''}${c.skip&&c.skip.length?' · בוטל ב-'+c.skip.map(dm).join(', '):''}</div></span><button class="ghost" type="button" data-delcon="${c.id}" aria-label="מחיקה">✕</button></li>`;
+  }).join('')||(impHtml?'':'<li class="muted">אין אילוצים. כל השעות בחלון הלימוד פנויות.</li>');
+}
+function renderTasks(){
+  const tk=ymd(today0());
+  const list=st.tasks.slice().sort((a,b)=>(a.done-b.done)||(a.due||'9').localeCompare(b.due||'9'));
+  $('#taskList').innerHTML=list.map(t=>{
+    const over=!t.done&&t.due&&t.due<tk;
+    const dueTxt=t.due?(t.due===tk?'היום':(over?'באיחור · ':'עד ')+dm(t.due)):'';
+    return `<li class="${t.done?'done':''}"><input type="checkbox" id="tk_${t.id}" data-tk="${t.id}" ${t.done?'checked':''} aria-label="סימון כבוצע"><span class="tx"><span class="main">${esc(t.text)}</span>${t.ex?' <span class="pill ex">דוגמה</span>':''}<div class="due ${over?'over':''}">${t.course?`<span class="course" style="--cc:${ccol(t.course)}">${esc(t.course)}</span> · `:''}${dueTxt}</div></span><button class="ghost" type="button" data-deltk="${t.id}" aria-label="מחיקה">✕</button></li>`;
+  }).join('')||'<li class="muted">אין משימות.</li>';
+  const done=st.tasks.filter(t=>t.done).length;
+  $('#taskCount').textContent=done+' מתוך '+st.tasks.length+' בוצעו';
+}
+
+/* ---------- grades ---------- */
+const PASS=60;
+const numOrNull=v=>(v===''||v===null||v===undefined||isNaN(+v))?null:Math.max(0,Math.min(100,+v));
+const r1=x=>Math.round(x*10)/10;
+function gradeCalc(g){
+  const w=Math.max(0,Math.min(100,+g.hwW||0))/100;
+  const hw=numOrNull(g.hw), ex=numOrNull(g.exam);
+  let final=null;
+  if(w>=1) final=hw;
+  else if(w>0){ if(hw!==null&&ex!==null) final=hw*w+ex*(1-w) }
+  else final=ex;
+  let need=null;
+  if(final===null&&w<1){
+    const t=numOrNull(g.target)??PASS, base=(w>0&&hw!==null)?hw*w:0;
+    if(w>0&&hw===null) need={txt:'חסר ציון עבודה'};
+    else{ const n=(t-base)/(1-w); need=n<=0?{txt:'היעד כבר מובטח',ok:1}:n>100?{txt:'היעד לא בהישג. כדי לעבור צריך '+Math.max(0,Math.ceil((PASS-base)/(1-w)))+' במבחן',warn:1}:{txt:'צריך '+Math.ceil(n)+' במבחן כדי להגיע ל-'+t} }
+  }
+  return {final,need};
+}
+function renderGrades(){
+  const gs=st.grades||[];
+  let sum=0,cred=0,passed=0,all=0;
+  $('#gBody').innerHTML=gs.map(g=>{
+    const c=gradeCalc(g); all+=+g.credits||0;
+    if(c.final!==null){sum+=c.final*(+g.credits||0);cred+=+g.credits||0;if(c.final>=PASS)passed+=+g.credits||0}
+    const inp=(f,v,extra)=>`<input type="number" id="g_${g.id}_${f}" data-g="${g.id}" data-f="${f}" value="${v??''}" ${extra||'min="0" max="100"'} aria-label="${f}">`;
+    const fin=c.final===null?(c.need?`<span class="need ${c.need.warn?'muted':''}"><span class="pill ${c.need.ok?'ok':c.need.warn?'warn':'gray'}">${esc(c.need.txt)}</span></span>`:'<span class="muted">—</span>')
+      :`<b class="num" style="font-size:1.1rem">${r1(c.final)}</b> <span class="pill ${c.final>=PASS?'ok':'exam'}">${c.final>=PASS?'עבר':'לא עבר'}</span>`;
+    return `<tr style="--cc:${ccol(g.course)}"><td><input class="cname" type="text" id="g_${g.id}_course" data-g="${g.id}" data-f="course" value="${esc(g.course)}" aria-label="קורס">${g.ex?' <span class="pill ex">דוגמה</span>':''}</td>
+      <td>${inp('credits',g.credits,'min="0" max="12" step="0.5"')}</td><td>${inp('hw',g.hw)}</td><td>${inp('hwW',g.hwW)}</td><td>${inp('exam',g.exam)}</td><td>${inp('target',g.target)}</td>
+      <td>${fin}</td><td><button class="ghost" type="button" data-delg="${g.id}" aria-label="מחיקה">✕</button></td></tr>`;
+  }).join('')||'<tr><td colspan="8" class="muted">אין קורסים בגיליון. הוסיפו את הראשון למטה.</td></tr>';
+  const avg=cred?r1(sum/cred):null;
+  $('#gStats').innerHTML=`<div class="gstat"><b>${avg??'—'}</b><span>ממוצע משוקלל</span></div><div class="gstat"><b>${passed}</b><span>נ״ז שהושלמו</span></div><div class="gstat"><b>${all}</b><span>נ״ז בגיליון</span></div>`;
+}
+
+/* ---------- mail digest ---------- */
+function extractDate(text){
+  const m=text.match(/(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?/);
+  if(!m) return null;
+  const T=today0(); let y=m[3]?+m[3]:T.getFullYear(); if(y<100) y+=2000;
+  const d=+m[1], mo=+m[2]; if(mo<1||mo>12||d<1||d>31) return null;
+  let dt=new Date(y,mo-1,d);
+  if(!m[3] && dt<addDays(T,-60)) dt=new Date(y+1,mo-1,d);
+  return ymd(dt);
+}
+function collegeSender(addr){
+  const dom=String(st.gmailFrom||'ac.il').toLowerCase().replace(/^@/,'');
+  const host=String(addr||'').split('@').pop();
+  return host===dom||host.endsWith('.'+dom)||addr===dom;
+}
+function digest(mail){
+  const text=mail.subject+' . '+mail.body;
+  const course=courses().find(c=>text.includes(c))||null;
+  let cat='כללי';
+  if(/מבחן|בחינה|בוחן/.test(text)) cat='מבחן';
+  else if(/הגשה|להגיש|מטלה|תרגיל/.test(text)) cat='הגשה';
+  if(/הוקדם|יוקדם|נדחה|יידחה|שינוי מועד|מועד חדש/.test(text)) cat='שינוי מועד';
+  if(/בוטל|יבוטל|ביטול/.test(text)) cat='ביטול';
+  if(/מילואים|התאמות/.test(text)) cat='התאמות';
+  const date=extractDate(text);
+  const tm=(text.match(/(\d{1,2}):(\d{2})/)||[])[0]||null;
+  const relevant=mail.src==='gmail'?collegeSender(mail.addr)&&(!!course||cat!=='כללי'):(!!course||cat!=='כללי');
+  const sents=mail.body.split(/(?<=[.!?])\s+|\n+/).map(s=>s.trim()).filter(Boolean);
+  const key=sents.find(s=>/\d{1,2}[./]\d{1,2}|מבחן|בוחן|הגש|מילואים|בוטל|חומר/.test(s))||sents[0]||'';
+  const summary=key.length>170?key.slice(0,167)+'…':key;
+  let action=null;
+  if(course&&date&&['מבחן','הגשה','שינוי מועד'].includes(cat)){
+    const kind=/מבחן|בחינה|בוחן/.test(text)?'exam':'submission';
+    const ev=st.events.find(e=>e.course===course&&e.kind===kind);
+    if(ev&&ev.date===date) action={type:'match',text:'תואם ללו״ז'};
+    else if(ev) action={type:'update',id:ev.id,date,time:tm,text:`עדכון המועד בלו״ז: ${dm(ev.date)} ← ${dm(date)}`};
+    else action={type:'add',kind,course,date,time:tm,text:'הוספה ללו״ז'};
+  }
+  return {course,cat,date,tm,relevant,summary,action};
+}
+function renderMail(){
+  const list=st.inbox.slice().sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+  const rel=[],irr=[];
+  for(const m of list){const g=digest(m);(g.relevant?rel:irr).push([m,g])}
+  const card=([m,g])=>{
+    const catCls={'שינוי מועד':'warn','ביטול':'warn','מבחן':'exam','הגשה':'submission','התאמות':'ok'}[g.cat]||'gray';
+    let acts='';
+    if(g.action){
+      if(g.action.type==='match') acts+=`<span class="pill ok">✓ ${g.action.text}</span>`;
+      else acts+=`<button type="button" class="primary" data-mact="${m.id}">${esc(g.action.text)}</button>`;
+    }
+    if(g.relevant&&!m.tasked) acts+=`<button type="button" data-mtask="${m.id}">הוספה כמשימה</button>`;
+    if(m.src==='gmail') acts+=`<button type="button" data-mblock="${m.id}">לא רלוונטי, להסתיר מהשולח הזה</button>`;
+    if(m.tasked) acts+='<span class="pill ok">נוספה משימה</span>';
+    if(m.url&&/^https:\/\/mail\.google\.com\//.test(m.url)) acts+=`<a href="${esc(m.url)}" target="_blank" rel="noopener">פתיחה ב-Gmail</a>`;
+    acts+=`<button type="button" class="ghost" data-mdel="${m.id}" aria-label="מחיקה">✕</button>`;
+    return `<div class="mail${g.relevant?'':' irrelevant'}"><div class="spread"><span class="from">${esc(m.from||'ללא שולח')}${m.at?' · '+dm(m.at):''}</span><span class="row"><span class="pill ${catCls}">${g.cat}</span>${g.course?`<span class="course" style="--cc:${ccol(g.course)}">${esc(g.course)}</span>`:''}${m.ex?'<span class="pill ex">דוגמה</span>':''}${m.src==='gmail'?'<span class="pill submission">Gmail</span>':''}</span></div>
+      <div class="sum"><b>${esc(m.subject)}.</b> ${esc(g.summary)}</div>${g.relevant?`<div class="row">${acts}</div>`:''}</div>`;
+  };
+  let h=rel.map(card).join('')||'<p class="muted">אין מיילים רלוונטיים.</p>';
+  if(irr.length) h+=`<details><summary>${irr.length} מיילים לא רלוונטיים הוסתרו</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${irr.map(card).join('')}</div></details>`;
+  $('#mailList').innerHTML=h;
+  $('#syncInfo').textContent=st.synced?'סנכרון אחרון: '+st.synced:'עוד לא סונכרן';
+}
+
+/* ---------- calendar sync (Moodle .ics / Google Calendar) ---------- */
+function parseIcs(text){
+  const lines=text.replace(/\r?\n[ \t]/g,'').split(/\r?\n/);
+  const found=[];let cur=null;
+  const unesc=v=>v.replace(/\\n/gi,' ').replace(/\\([,;\\])/g,'$1');
+  for(const l of lines){
+    if(l==='BEGIN:VEVENT') cur={};
+    else if(l==='END:VEVENT'){ if(cur) found.push(cur); cur=null }
+    else if(cur){
+      const i=l.indexOf(':'); if(i<0) continue;
+      const k=l.slice(0,i).split(';')[0].toUpperCase(), v=l.slice(i+1);
+      if(k==='SUMMARY') cur.summary=unesc(v);
+      if(k==='DESCRIPTION') cur.desc=unesc(v).slice(0,300);
+      if(k==='CATEGORIES') cur.course=unesc(v).split(',')[0].trim();
+      if(k==='LOCATION') cur.location=unesc(v).trim();
+      if(k==='DTSTART'||k==='DTEND'){
+        const m=v.match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})\d{2}(Z)?)?/);
+        if(m){ let d=new Date(+m[1],+m[2]-1,+m[3],+(m[4]||9),+(m[5]||0));
+          if(m[6]) d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]));
+          const t=pad(d.getHours())+':'+pad(d.getMinutes());
+          if(k==='DTSTART'){cur.date=ymd(d); cur.time=t; cur.allDay=!m[4]}
+          else {cur.endDate=ymd(d); cur.endTime=t}
+        }
+      }
+    }
+  }
+  return found;
+}
+const EXAM_RE=/מבחן|בחינה|בוחן|exam/i, SUB_RE=/הגש|מטלה|תרגיל|עבודה|assignment|due|closes|נסגר|מועד אחרון/i;
+function busyFrom(f,source){
+  if(f.allDay||!f.time||!f.endTime) return null;
+  if(f.endDate&&f.endDate!==f.date) return null;
+  if(toMin(f.endTime)<=toMin(f.time)) return null;
+  const title=(f.summary||'אירוע').trim();
+  const lesson=/שיעור|הרצאה|תרגול|תרגיל כיתה|סמינר|סדנה|lecture|class|seminar|tutorial/i.test(title)||courses().some(c=>title.includes(c))||!!f.location||(source!=='gcal-extra'&&!!f.course);
+  return {id:uid(),src:source,kind:lesson?'class':'other',title:f.course&&!title.includes(f.course)?f.course+' · '+title:title,from:f.date,to:f.date,start:f.time,end:f.endTime,location:(f.location||'').slice(0,80),teacher:teacherFrom(f.desc)};
+}
+function teacherFrom(desc){
+  const t=String(desc||'').replace(/<[^>]+>/g,' ');
+  const m=t.match(/(?:מרצה|מרצים|מרצת הקורס|מרצה הקורס|מתרגל(?:ת)?|lecturer|instructor|teacher)\s*[:：\-–]\s*([^\n,;|<]{2,40})/i)||t.match(/((?:ד[״"]ר|פרופ[׳']|עו[״"]ד|Dr\.|Prof\.)\s*[^\n,;|<]{2,30})/);
+  return m?m[1].trim():'';
+}
+function ingestCalendar(found,source,busyOnly){
+  let added=0,updated=0,same=0,skipped=0,past=0,busy=0;
+  const known=courses(), tk=ymd(today0());
+  st.constraints=st.constraints.filter(c=>c.src!==source);
+  const seen=new Set(st.constraints.filter(c=>c.src).map(c=>c.from+'|'+c.start+'|'+c.end));
+  for(const f of found){
+    if(!f.summary||!f.date){skipped++;continue}
+    if(f.date<tk){past++;continue}
+    const kind=busyOnly?null:(EXAM_RE.test(f.summary)?'exam':(SUB_RE.test(f.summary)?'submission':null));
+    if(!kind){
+      const c=busyFrom(f,source);
+      if(!c){skipped++;continue}
+      const key=c.from+'|'+c.start+'|'+c.end;
+      if(seen.has(key)){same++;continue}
+      seen.add(key); st.constraints.push(c); busy++; continue;
+    }
+    let course=f.course||'', title=f.summary.trim();
+    if(course){const k=known.find(c=>course.includes(c)); if(k) course=k}
+    const parts=f.summary.split(/\s+[-–]\s+/);
+    if(!course){
+      const k=known.find(c=>f.summary.includes(c)||(f.desc||'').includes(c));
+      if(k) course=k; else if(parts.length>1){course=parts[1].trim();title=parts[0].trim()} else course='Moodle';
+    }
+    if(parts.length>1&&parts[1].trim()===course) title=parts[0].trim();
+    title=title.replace(/\s+is due$/i,'').trim()||(kind==='exam'?'מבחן':'הגשה');
+    const ev=st.events.find(e=>e.course===course&&e.kind===kind&&(e.title===title||e.src!==source||!e.src));
+    if(ev&&ev.date===f.date){same++;continue}
+    if(ev&&(ev.title===title||!ev.src)){ev.date=f.date;ev.time=f.time;updated++;continue}
+    st.events.push({id:uid(),src:source,kind,course,title,date:f.date,time:f.time,hours:kind==='exam'?20:6,difficulty:2,duration:/בוחן/.test(title)?120:180});
+    added++;
+  }
+  const n=new Date();
+  st.synced=n.getDate()+'/'+(n.getMonth()+1)+' '+pad(n.getHours())+':'+pad(n.getMinutes());
+  save(); render();
+  const src=source==='gcal'?'מ-Google Calendar: ':source==='gcal-extra'?'מהיומנים הנוספים: ':'';
+  const busyTxt=busy?`, <b>${busy} שיעורים ואירועים נכנסו כזמן תפוס</b>`:'';
+  if(busyOnly){ return {added,updated,busy,html:`${src}${busy} אירועים נכנסו כזמן תפוס${same?`, ${same} כבר היו`:''}.`} }
+  if(!found.length) $('#syncResult').innerHTML=`<div class="warnbox">${src}${source==='gcal'?'ביומן שנבחר אין אירועים ב-5 החודשים הקרובים. בדקו שבחרתם את יומן ה-Moodle, ושעברו כמה שעות מאז שהוספתם אותו ל-Google (לוקח זמן עד שהאירועים מופיעים).':'הקובץ נקרא, אבל אין בו אירועים. ב-Moodle בחרו בייצוא <b>כל האירועים</b> (ולא רק "אירועי משתמש") ואת התקופה הארוכה ביותר, וייצאו שוב.'}</div>`;
+  else $('#syncResult').innerHTML=`<div class="warnbox" style="background:color-mix(in srgb,var(--${added+updated?'ok':'warn'}) 12%,transparent)">${src}נמצאו ${found.length} אירועים: <b>${added} מבחנים והגשות נוספו</b>, ${updated} עודכנו${busyTxt}, ${same} כבר בלו״ז${past?`, ${past} כבר עברו`:''}${skipped?`, ${skipped} דולגו (אירועים של יום שלם או בלי שעה)`:''}.${added+updated||busy?' השיעורים מופיעים בלו״ז ובאילוצים, והלימוד מתוכנן סביבם.':' לא נמצאו מבחנים, הגשות או שיעורים עתידיים.'}</div>`;
+  return {added,updated,busy};
+}
+function importIcs(text){ ingestCalendar(parseIcs(text),'ics') }
+
+/* ---------- alerts ---------- */
+const THRESH=[[7*864e5,'שבוע'],[3*864e5,'3 ימים'],[864e5,'יום אחד'],[3*36e5,'3 שעות']];
+let notifOK=false;
+try{notifOK=('Notification' in window)&&Notification.permission==='granted'}catch(e){}
+function toast(msg){
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<span style="flex:1">${msg}</span><button type="button" aria-label="סגירה">✕</button>`;
+  el.querySelector('button').onclick=()=>el.remove();
+  $('#toasts').appendChild(el); setTimeout(()=>el.remove(),12000);
+}
+function checkAlerts(){
+  for(const e of st.events){
+    const ms=countdown(e); if(ms<=0) continue;
+    for(const [th,label] of THRESH){
+      const k=e.id+':'+th;
+      if(ms<=th && !st.alerts[k]){
+        // mark all wider thresholds too, show only the tightest one
+        for(const [t2] of THRESH) if(ms<=t2) st.alerts[e.id+':'+t2]=1;
+        const msg=`<b>${e.kind==='exam'?'מבחן':'הגשה'} בעוד פחות מ${label}:</b> ${esc(e.course)}, ${esc(e.title)} (${dm(e.date)} ${e.time})`;
+        toast(msg);
+        if(notifOK){try{new Notification('לוח דין',{body:msg.replace(/<[^>]+>/g,'')})}catch(x){}}
+        save(); break;
+      }
+    }
+  }
+}
+function renderAlert(){
+  const now=new Date(), nm=now.getHours()*60+now.getMinutes();
+  $('#clock').textContent=DAYS[now.getDay()]+' '+now.getDate()+'/'+(now.getMonth()+1)+' · '+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+  const up=st.events.map(e=>[e,countdown(e)]).filter(x=>x[1]>0).sort((a,b)=>a[1]-b[1]);
+  const day=plan&&plan.days[ymd(today0())];
+  let nowTxt='';
+  if(day){
+    const cur=day.blocks.find(b=>!b.allDay&&b.type!=='deadline'&&b.start<=nm&&nm<b.end);
+    const next=day.blocks.find(b=>!b.allDay&&b.type!=='deadline'&&b.start>nm);
+    const lbl=b=>b.type==='study'?b.course+' ('+b.title+')':b.title;
+    if(cur) nowTxt=`עכשיו: ${esc(lbl(cur))} עד ${fmtMin(cur.end)}`;
+    else if(next) nowTxt=`הבא היום: ${esc(lbl(next))} ב-${fmtMin(next.start)}`;
+    else nowTxt=day.rest?'היום יום מנוחה.':'סיימת את התוכנית להיום.';
+  }
+  if(!up.length){ $('#alert').innerHTML=`<div class="count">—</div><div class="what"><b>אין מבחנים או הגשות קרובים</b><div class="now">${nowTxt}</div></div>`; return }
+  const [e,ms]=up[0];
+  const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1e3);
+  const sev=ms<=864e5?'danger':'';
+  const sevTxt=ms<=864e5?'מחר או היום':(ms<=3*864e5?'מתקרב':'בתכנון');
+  const nxt=up[1]?` · אחריו: ${esc(up[1][0].course)} בעוד ${cdText(up[1][1])}`:'';
+  $('#alert').innerHTML=`<div class="count">${d>0?d+' ימים ':''}${pad(h)}:${pad(m)}:${pad(s)}</div>
+   <div class="what"><span class="sev ${sev}">${sevTxt}</span> <b>${e.kind==='exam'?'מבחן':'הגשה'} ב${esc(e.course)}</b>: ${esc(e.title)}, ${DAYS[parseYmd(e.date).getDay()]} ${dm(e.date)} ב-${e.time}${nxt}<div class="now">${nowTxt}</div></div>
+   <button type="button" id="goEv" data-go="${e.date}">לראות בלו״ז</button>`;
+}
+
+/* ---------- render all ---------- */
+function render(){
+  plan=buildPlan();
+  renderWeek(); renderDocket(); renderEvents(); renderConstraints(); renderTasks(); renderGrades(); renderMail(); renderAlert();
+  const s=st.settings;
+  $('#sStart').value=s.dayStart; $('#sEnd').value=s.dayEnd; $('#sMax').value=s.maxHours; $('#sSess').value=s.session; $('#sBrk').value=s.brk; $('#sShab').checked=!!s.shabbat;
+}
+function goTo(key){
+  const T=today0(); const diff=diffDays(ymd(addDays(T,-T.getDay())),key);
+  weekOffset=Math.floor(diff/7); selDay=key; render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
+  if(!t) return;
+  const ds=t.dataset;
+  if(ds.edit!==undefined){const i=+ds.edit;editIdx=editIdx===i?null:i;renderDocket();return}
+  if(ds.edact){doEdit(ds.edact);return}
+  if(ds.day){selDay=ds.day;editIdx=null;renderWeek();renderDocket();return}
+  if(ds.go){goTo(ds.go);return}
+  if(ds.delg) st.grades=st.grades.filter(g=>g.id!==ds.delg);
+  if(ds.delev){st.events=st.events.filter(e=>e.id!==ds.delev);st.manual=st.manual.filter(m=>m.evId!==ds.delev)}
+  if(ds.delcon) st.constraints=st.constraints.filter(c=>c.id!==ds.delcon);
+  if(ds.delsrc) st.constraints=st.constraints.filter(c=>c.src!==ds.delsrc);
+  if(ds.deltk) st.tasks=st.tasks.filter(x=>x.id!==ds.deltk);
+  if(ds.mdel) st.inbox=st.inbox.filter(m=>m.id!==ds.mdel);
+  if(ds.mblock){const m=st.inbox.find(x=>x.id===ds.mblock); if(m&&m.addr){st.blocked.push(m.addr);st.inbox=st.inbox.filter(x=>x.addr!==m.addr);toast('מיילים מ-'+esc(m.addr)+' לא ייכנסו יותר.')}}
+  if(ds.mact){
+    const m=st.inbox.find(x=>x.id===ds.mact), g=digest(m), a=g.action;
+    if(a.type==='update'){const e=st.events.find(x=>x.id===a.id); e.date=a.date; if(a.time) e.time=a.time; toast(`עודכן: ${esc(e.course)} עבר ל-${dm(a.date)}. הלו״ז חושב מחדש.`)}
+    if(a.type==='add'){st.events.push({id:uid(),kind:a.kind,course:a.course,title:a.kind==='exam'?'מבחן':'הגשה',date:a.date,time:a.time||(a.kind==='exam'?'09:00':'23:59'),hours:a.kind==='exam'?20:6,difficulty:2,duration:180});toast('נוסף ללו״ז: '+esc(a.course))}
+  }
+  if(ds.mtask){
+    const m=st.inbox.find(x=>x.id===ds.mtask), g=digest(m);
+    st.tasks.push({id:uid(),text:m.subject+(g.summary?': '+g.summary:''),course:g.course||'',due:g.date||'',done:false});
+    m.tasked=true;
+  }
+  save(); render();
+});
+document.addEventListener('change',ev=>{
+  const t=ev.target;
+  if(t.dataset&&t.dataset.gcx!==undefined){
+    const id=t.dataset.gcx; st.gcalExtra=(st.gcalExtra||[]).filter(x=>x!==id); if(t.checked) st.gcalExtra.push(id);
+    if(!t.checked) st.constraints=st.constraints.filter(c=>c.src!=='gcal-extra');
+    save(); gcalSync(true,false); return;
+  }
+  if(t.id==='adType'){const st_=t.value==='study';document.querySelectorAll('#addDay .adStudy').forEach(x=>x.hidden=!st_);document.querySelectorAll('#addDay .adCon').forEach(x=>x.hidden=st_);document.querySelectorAll('#addDay .adClass').forEach(x=>x.hidden=t.value!=='class');return}
+  if(t.id==='conKind'){document.querySelectorAll('#conForm .conClass').forEach(x=>x.hidden=t.value!=='class');return}
+  if(t.dataset&&t.dataset.g){
+    const g=st.grades.find(x=>x.id===t.dataset.g); if(!g) return;
+    const f=t.dataset.f; g[f]=f==='course'?t.value.trim():(t.value===''?null:+t.value);
+    if(f==='hwW'&&g[f]===null) g[f]=0;
+    save(); renderGrades(); if(f==='course') renderEvents(); return;
+  }
+  if(t.dataset&&t.dataset.tk){const x=st.tasks.find(k=>k.id===t.dataset.tk); x.done=t.checked; save(); renderTasks(); renderDocket(); return}
+  if(['sStart','sEnd','sMax','sSess','sBrk','sShab'].includes(t.id)){
+    const s=st.settings;
+    s.dayStart=$('#sStart').value||'08:00'; s.dayEnd=$('#sEnd').value||'22:00';
+    s.maxHours=Math.max(1,+$('#sMax').value||6); s.session=Math.max(30,+$('#sSess').value||90); s.brk=Math.max(0,+$('#sBrk').value||0); s.shabbat=$('#sShab').checked;
+    save(); render();
+  }
+});
+$('#prevW').onclick=()=>{weekOffset--;const T=today0();selDay=ymd(addDays(T,-T.getDay()+weekOffset*7+(weekOffset===0?T.getDay():0)));render()};
+$('#nextW').onclick=()=>{weekOffset++;const T=today0();selDay=ymd(addDays(T,-T.getDay()+weekOffset*7+(weekOffset===0?T.getDay():0)));render()};
+$('#thisW').onclick=()=>{weekOffset=0;selDay=ymd(today0());render()};
+$('#btnReset').onclick=()=>{st=seed();save();weekOffset=0;selDay=ymd(today0());$('#syncResult').innerHTML='';render();toast('הדוגמה נטענה מחדש.')};
+$('#btnClear').onclick=()=>{$('#clearConfirm').hidden=false};
+$('#clearNo').onclick=()=>{$('#clearConfirm').hidden=true};
+$('#clearYes').onclick=()=>{const s=st.settings;st={settings:s,events:[],constraints:[],tasks:[],inbox:[],grades:[],manual:[],synced:null,alerts:{},gmailFrom:st.gmailFrom||'colman.ac.il',gmailV:2,blocked:st.blocked||[]};save();$('#clearConfirm').hidden=true;$('#syncResult').innerHTML='';render();toast('הלוח ריק. התחילו מהוספת מבחן או הגשה.')};
+$('#btnNotify').onclick=async()=>{
+  try{
+    if(!('Notification' in window)) throw 0;
+    const p=await Notification.requestPermission();
+    notifOK=p==='granted';
+    toast(notifOK?'התראות מערכת הופעלו.':'הדפדפן לא אישר התראות מערכת. ההתראות ימשיכו להופיע כאן בדף.');
+  }catch(e){toast('הדפדפן הזה לא מאפשר התראות מערכת. ההתראות ימשיכו להופיע כאן בדף.')}
+};
+$('#evForm').onsubmit=e=>{e.preventDefault();
+  const kind=$('#evKind').value;
+  st.events.push({id:uid(),kind,course:$('#evCourse').value.trim(),title:$('#evTitle').value.trim(),date:$('#evDate').value,time:$('#evTime').value,hours:+$('#evHours').value,difficulty:+$('#evDiff').value,duration:/בוחן/.test($('#evTitle').value)?120:180});
+  e.target.reset(); save(); render(); toast('נוסף ללו״ז והתוכנית חושבה מחדש.');
+};
+const cd=$('#conDays'); cd.innerHTML=DAYS.map((d,i)=>`<label><input type="checkbox" id="cd${i}" value="${i}">${DSHORT[i]}</label>`).join('');
+$('#conMode').onchange=()=>{const w=$('#conMode').value==='weekly';cd.hidden=!w;document.querySelectorAll('.conDates').forEach(x=>x.hidden=w)};
+$('#conForm').onsubmit=e=>{e.preventDefault();
+  const c={id:uid(),kind:$('#conKind').value,title:$('#conTitle').value.trim(),allDay:$('#conAll').checked,start:$('#conStart').value,end:$('#conEnd').value};
+  if(c.kind==='class'){c.location=$('#conLoc').value.trim();c.teacher=$('#conTeacher').value.trim()}
+  if($('#conMode').value==='weekly'){c.days=[...cd.querySelectorAll('input:checked')].map(x=>+x.value); if(!c.days.length){toast('בחרו לפחות יום אחד בשבוע.');return}}
+  else{c.from=$('#conFrom').value;c.to=$('#conTo').value||c.from; if(!c.from){toast('בחרו תאריך התחלה.');return}}
+  if(!c.allDay&&toMin(c.end)<=toMin(c.start)){toast('שעת הסיום צריכה להיות אחרי שעת ההתחלה.');return}
+  st.constraints.push(c); e.target.reset(); $('#conMode').onchange(); save(); render(); toast('האילוץ נוסף והלו״ז חושב מחדש.');
+};
+document.addEventListener('submit',ev=>{
+  if(ev.target.id!=='addDay') return;
+  ev.preventDefault();
+  const type=$('#adType').value, a=$('#adStart').value, b=$('#adEnd').value;
+  if(toMin(b)<=toMin(a)){toast('שעת הסיום צריכה להיות אחרי שעת ההתחלה.');return}
+  if(type==='study'){
+    st.manual.push({id:uid(),date:selDay,start:a,end:b,evId:$('#adEv').value,note:''});
+    toast('הלימוד נקבע ביום הזה. שאר השעות סודרו מחדש.');
+  }else{
+    const title=$('#adTitle').value.trim()||({other:'פגישה',work:'עבודה',class:'הרצאה',miluim:'מילואים'}[type]);
+    const c={id:uid(),kind:type,title,start:a,end:b};
+    if(type==='class'){c.location=$('#adLoc').value.trim();c.teacher=$('#adTeacher').value.trim()}
+    if($('#adWeekly').checked) c.days=[parseYmd(selDay).getDay()]; else {c.from=selDay;c.to=selDay}
+    st.constraints.push(c);
+    toast('נוסף ללו״ז וגם לרשימת האילוצים.');
+  }
+  editIdx=null; save(); render();
+});
+$('#gForm').onsubmit=e=>{e.preventDefault();
+  const v=id=>$(id).value===''?null:+$(id).value;
+  st.grades.push({id:uid(),course:$('#gCourse').value.trim(),credits:+$('#gCred').value||0,hw:v('#gHw'),hwW:v('#gHwW')||0,exam:v('#gExam'),target:v('#gTarget')??80});
+  e.target.reset(); save(); render(); toast('הקורס נוסף לגיליון הציונים.');
+};
+$('#taskForm').onsubmit=e=>{e.preventDefault();
+  st.tasks.push({id:uid(),text:$('#tkText').value.trim(),course:$('#tkCourse').value.trim(),due:$('#tkDue').value,done:false});
+  e.target.reset(); save(); render();
+};
+$('#mailForm').onsubmit=e=>{e.preventDefault();
+  st.inbox.push({id:uid(),from:$('#mFrom').value.trim(),subject:$('#mSubj').value.trim(),body:$('#mBody').value.trim(),at:ymd(today0())});
+  e.target.reset(); save(); render(); toast('המייל סוכם ונוסף לתיבה.');
+};
+$('#icsDemo').onclick=()=>importIcs(sampleIcs());
+function readIcsFile(f){
+  if(!f) return;
+  $('#syncResult').innerHTML='<div class="warnbox">קורא את הקובץ…</div>';
+  const r=new FileReader();
+  r.onerror=()=>{$('#syncResult').innerHTML='<div class="warnbox">לא הצלחתי לקרוא את הקובץ. נסו לבחור אותו שוב, או לפתוח את האפליקציה בדפדפן במחשב.</div>'};
+  r.onload=()=>{
+    const txt=String(r.result||'');
+    if(!/BEGIN:VCALENDAR/i.test(txt)){$('#syncResult').innerHTML=`<div class="warnbox">הקובץ "${esc(f.name)}" הוא לא קובץ יומן. ב-Moodle צריך ללחוץ <b>ייצוא</b> (לא "קבלת כתובת URL"), ואז לבחור כאן את הקובץ שירד. השם שלו בדרך כלל icalexport.ics.</div>`;return}
+    try{importIcs(txt)}catch(err){$('#syncResult').innerHTML='<div class="warnbox">משהו בקובץ לא תקין, ולא הצלחתי לקרוא אותו. שלחי לי צילום מסך של ההודעה הזו ואבדוק.</div>'}
+  };
+  r.readAsText(f);
+}
+$('#icsFile').onchange=e=>{readIcsFile(e.target.files[0]); e.target.value=''};
+const mdBox=$('#mdFile');
+mdBox.addEventListener('dragover',e=>{e.preventDefault()});
+mdBox.addEventListener('drop',e=>{e.preventDefault(); readIcsFile(e.dataTransfer&&e.dataTransfer.files[0])});
+
+/* ---------- Direct Google sign-in (public site, no Claude) ---------- */
+let gDirect=false;
+const gTok={};
+const SC_CAL='https://www.googleapis.com/auth/calendar.readonly', SC_MAIL='https://www.googleapis.com/auth/gmail.readonly';
+let gisP=null;
+function loadGis(){
+  if(window.google&&google.accounts&&google.accounts.oauth2) return Promise.resolve();
+  if(gisP) return gisP;
+  gisP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;sc.onload=()=>res();sc.onerror=()=>{gisP=null;rej({code:'gis_failed'})};document.head.appendChild(sc)});
+  return gisP;
+}
+function gToken(scope,interactive){
+  const t=gTok[scope];
+  if(t&&t.exp>Date.now()+60000) return Promise.resolve(t.token);
+  if(!interactive) return Promise.reject({code:'needs_click'});
+  if(!(window.google&&google.accounts&&google.accounts.oauth2)) return loadGis().then(()=>Promise.reject({code:'try_again'}));
+  return new Promise((res,rej)=>{
+    const c=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope,
+      callback:r=>{ if(r&&r.error){rej({code:'approval_required'});return} gTok[scope]={token:r.access_token,exp:Date.now()+(+r.expires_in||3600)*1000}; res(r.access_token) },
+      error_callback:e=>rej({code:e&&e.type==='popup_failed_to_open'?'popup_blocked':'approval_required'})});
+    c.requestAccessToken();
+  });
+}
+async function gfetch(url,scope){
+  const tok=await gToken(scope,false);
+  const r=await fetch(url,{headers:{Authorization:'Bearer '+tok}});
+  if(r.status===401){delete gTok[scope];throw {code:'needs_click'}}
+  if(r.status===403) throw {code:'forbidden'};
+  if(!r.ok) throw {code:'upstream_error',retryable:r.status>=500};
+  return r.json();
+}
+function directMsg(c,what){
+  return {
+    needs_click:'ההתחברות ל-Google תקפה לשעה. לחצו על הכפתור כדי להתחבר שוב ולעדכן.',
+    try_again:'רכיב ההתחברות של Google נטען. לחצו שוב.',
+    approval_required:'ההתחברות בוטלה. לחצו שוב ואשרו גישה ל'+what+'.',
+    popup_blocked:'הדפדפן חסם את חלון ההתחברות של Google. אפשרו חלונות קופצים לאתר הזה ולחצו שוב.',
+    forbidden:'Google לא אישרה גישה. כל עוד Google לא אישרה את האפליקציה, רק מי שנוסף כמשתמש בדיקה יכול להתחבר. פנו למי ששלח לכם את הקישור.',
+    gis_failed:'לא הצלחתי לטעון את ההתחברות של Google. בדקו את החיבור לאינטרנט ונסו שוב.'
+  }[c]||'לא הצלחתי להתחבר ל-Google כרגע. נסו שוב בעוד דקה.';
+}
+function b64u(data){
+  try{const bin=atob(String(data).replace(/-/g,'+').replace(/_/g,'/'));const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder('utf-8').decode(u)}catch(e){return ''}
+}
+function mailText(part){
+  if(!part) return '';
+  if(part.mimeType==='text/plain'&&part.body&&part.body.data) return b64u(part.body.data);
+  for(const p of part.parts||[]){const t=mailText(p); if(t) return t}
+  if(part.mimeType==='text/html'&&part.body&&part.body.data) return b64u(part.body.data).replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+  return '';
+}
+
+/* ---------- Gmail (claude.ai connector) ---------- */
+const GM='Gmail';
+let mcp=null, gmTimer=null, gmBusy=false;
+function setGm(cls,txt){const el=$('#gmStat');el.className='gmstat '+(cls||'');el.textContent=txt}
+function cleanBody(t){
+  const out=[];
+  for(const line of String(t).split(/\r?\n/)){
+    if(/^\s*>/.test(line)) continue;
+    if(/^(On .+wrote:|ב.+כתב\/ה:|-----Original Message|From: )/.test(line.trim())) break;
+    out.push(line);
+  }
+  return out.join('\n').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim().slice(0,2000);
+}
+function gmErr(e,retry){
+  const c=e&&e.code;
+  if(gDirect){ setGm('err',directMsg(c,'המייל')); $('#gmBtn').hidden=false; $('#gmBtn').textContent='התחברות עם Google ומשיכת מיילים'; return }
+  if(e&&e.retryable&&retry){setGm('','Gmail לא ענה. מנסה שוב…');setTimeout(()=>fetchGmail(false),Math.max(e.retryAfterMs||0,2000+Math.random()*2000));return}
+  const msg={
+    server_not_connected:'Gmail לא מחובר לחשבון שלך ב-claude.ai. מחברים אותו בהגדרות ← Connectors, ואז לוחצים כאן שוב.',
+    needs_reauth:'החיבור ל-Gmail פג. מחברים אותו מחדש ב-claude.ai בהגדרות ← Connectors, ואז לוחצים כאן שוב.',
+    selection_required:'יש יותר מחשבון Gmail אחד מחובר. בחרו חשבון בחלון ש-claude.ai מציג, ולחצו שוב.',
+    approval_required:'לא אושרה גישה ל-Gmail. לוחצים על הכפתור ומאשרים בחלון שנפתח.',
+    not_in_manifest:'הגישה ל-Gmail כבויה לדף הזה. אפשר להפעיל אותה מתפריט ההרשאות של הדף ולנסות שוב.',
+    blocked_by_policy:'הארגון שלך חוסם גישה ל-Gmail מהדף הזה. אפשר להמשיך להדביק מיילים ידנית.',
+    tool_error:'Gmail החזיר שגיאה בחיפוש. נסו שוב בעוד דקה.'
+  }[c]||'לא הצלחתי למשוך מיילים כרגע. נסו שוב בעוד דקה.';
+  setGm('err',msg); $('#gmBtn').hidden=false;
+  if(['server_not_connected','needs_reauth','not_in_manifest','blocked_by_policy','approval_required'].includes(c)){st.gmailOn=false;save();if(gmTimer){clearInterval(gmTimer);gmTimer=null}}
+}
+async function fetchGmail(retry,interactive){
+  const direct=gDirect&&GMAIL_DIRECT;
+  if((!mcp&&!direct)||gmBusy) return;
+  gmBusy=true; setGm('','מושך מיילים מ-Gmail…'); $('#gmBtn').disabled=true;
+  const tokP=direct?gToken(SC_MAIL,!!interactive):null;
+  const dom=(st.gmailFrom||'').trim().replace(/[^\w.@-]/g,'');
+  const q='newer_than:21d -category:promotions -category:social from:'+(dom||'ac.il');
+  try{
+    if(direct){
+      await tokP;
+      const j=await gfetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15&q='+encodeURIComponent(q),SC_MAIL);
+      let added=0;
+      for(const m of (j.messages||[]).slice(0,12)){
+        if(st.inbox.some(x=>x.gid===m.id)) continue;
+        const g=await gfetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+encodeURIComponent(m.id)+'?format=full',SC_MAIL);
+        const H=n=>{const h=((g.payload&&g.payload.headers)||[]).find(x=>String(x.name).toLowerCase()===n);return h?h.value:''};
+        const from=H('from'), addr=((from.match(/<([^>]+)>/)||[0,from])[1]||'').trim().toLowerCase();
+        if(!collegeSender(addr)||st.blocked.includes(addr)) continue;
+        const at=g.internalDate?ymd(new Date(+g.internalDate)):ymd(today0());
+        st.inbox.push({id:uid(),gid:m.id,src:'gmail',addr,from:from.replace(/<[^>]+>/,'').replace(/"/g,'').trim()||addr,subject:H('subject')||'(ללא נושא)',body:cleanBody(mailText(g.payload))||g.snippet||'',at,url:'https://mail.google.com/mail/#all/'+encodeURIComponent(m.threadId||m.id)});
+        added++;
+      }
+      const n=new Date(); st.gmailOn=true; save(); render();
+      setGm('ok','מחובר ל-Gmail · נבדק ב-'+pad(n.getHours())+':'+pad(n.getMinutes())+' · '+(added?added+' מיילים חדשים נוספו לסיכום':'אין מיילים חדשים'));
+      $('#gmBtn').textContent='בדיקה עכשיו';
+      if(!gmTimer) gmTimer=setInterval(()=>fetchGmail(true,false),10*60*1000);
+      return;
+    }
+    const r=await mcp.callTool(GM,'search_threads',{query:q,pageSize:15,view:'THREAD_VIEW_SUMMARY'},{cache:false});
+    const threads=(r&&r.payload&&r.payload.threads)||[];
+    let added=0;
+    for(const th of threads.slice(0,12)){
+      const sm=(th.messages||[])[0]; if(!sm) continue;
+      if(st.inbox.some(m=>m.gid===sm.id)) continue;
+      let body=sm.snippet||'';
+      try{
+        const t=await mcp.callTool(GM,'get_thread',{threadId:th.id,messageFormat:'PLAIN_TEXT'},{cache:false});
+        const p=t&&t.payload; const ms=(p&&(p.messages||(p.thread&&p.thread.messages)))||[];
+        const last=ms[ms.length-1]; if(last&&last.plaintextBody) body=cleanBody(last.plaintextBody)||body;
+      }catch(e){ if(e&&e.code!=='tool_error') throw e }
+      const dn=sm.addressDisplayNames&&sm.addressDisplayNames[0]&&sm.addressDisplayNames[0].displayName;
+      const at=sm.date?ymd(new Date(sm.date)):ymd(today0());
+      const addr=String((sm.addressDisplayNames&&sm.addressDisplayNames[0]&&sm.addressDisplayNames[0].emailAddress)||sm.sender||'').toLowerCase();
+      if(!collegeSender(addr)||st.blocked.includes(addr)) continue;
+      st.inbox.push({id:uid(),gid:sm.id,src:'gmail',addr,from:dn||sm.sender||'',subject:sm.subject||'(ללא נושא)',body,at,url:th.viewUrl||sm.viewUrl||''});
+      added++;
+    }
+    const n=new Date(); st.gmailOn=true; st.gmailAt=pad(n.getHours())+':'+pad(n.getMinutes());
+    save(); render();
+    setGm('ok','מחובר ל-Gmail · נבדק ב-'+st.gmailAt+' · '+(added?added+' מיילים חדשים נוספו לסיכום':'אין מיילים חדשים')+' · בדיקה חוזרת כל 10 דקות');
+    $('#gmBtn').textContent='בדיקה עכשיו'; $('#gmBtn').hidden=false;
+    if(!gmTimer) gmTimer=setInterval(()=>fetchGmail(true,false),10*60*1000);
+  }catch(e){ gmErr(e,retry) }
+  finally{ gmBusy=false; $('#gmBtn').disabled=false }
+}
+$('#gmBtn').onclick=()=>fetchGmail(true,true);
+$('#gmFrom').onchange=()=>{st.gmailFrom=$('#gmFrom').value.trim().replace(/^@/,'')||'colman.ac.il';$('#gmFrom').value=st.gmailFrom;st.inbox=st.inbox.filter(m=>m.src!=='gmail'||collegeSender(m.addr));save();render();if(st.gmailOn) fetchGmail(true,false)};
+(async()=>{
+  try{ mcp=(window.claude&&typeof window.claude.use==='function')?await window.claude.use('mcp'):null }catch(e){ mcp=null }
+  initGcal();
+  if(gDirect&&GMAIL_DIRECT){ $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false; $('#gmBtn').textContent='התחברות עם Google ומשיכת מיילים'; setGm('','לוחצים, מתחברים עם Google ומאשרים קריאת מיילים. האפליקציה רק קוראת מיילים מהמכללה, לא שולחת ולא מוחקת.'); return }
+  if(!mcp){ setGm('',window.claude?'חיבור ישיר ל-Gmail זמין כשפותחים את הקישור ב-claude.ai עם חשבון שמחובר אליו Gmail. כאן אפשר להדביק מיילים ידנית (למטה).':'כאן מדביקים מיילים מהמכללה ידנית: פותחים את המייל ב-Gmail, מעתיקים ומדביקים למטה, והאפליקציה מסכמת אותו.'); return }
+  $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false;
+  if(st.gmailOn) fetchGmail(true);
+  else setGm('','לחצו על הכפתור ואשרו גישה. האפליקציה רק קוראת מיילים מהמכללה, לא שולחת ולא מוחקת.');
+})();
+
+/* ---------- Google Calendar (claude.ai connector) ---------- */
+const GC='Google Calendar';
+let gcTimer=null, gcBusy=false;
+function setGc(cls,txt){const el=$('#gcStat');el.className='gmstat '+(cls||'');el.textContent=txt}
+function arr(p,keys){
+  if(Array.isArray(p)) return p;
+  if(p&&typeof p==='object'){ for(const k of keys) if(Array.isArray(p[k])) return p[k]; if(p.result) return arr(p.result,keys) }
+  return [];
+}
+function evTimes(x){
+  const s0=evStart(x); if(!s0) return null;
+  const st_=x&&(x.start||x.startTime||x.start_time), en=x&&(x.end||x.endTime||x.end_time);
+  const sv=typeof st_==='string'?st_:(st_&&(st_.dateTime||st_.date_time||st_.date))||'';
+  const ev=typeof en==='string'?en:(en&&(en.dateTime||en.date_time||en.date))||'';
+  const out=Object.assign({allDay:/^\d{4}-\d{2}-\d{2}$/.test(sv)},s0);
+  if(ev&&!/^\d{4}-\d{2}-\d{2}$/.test(ev)){const d=new Date(ev); if(!isNaN(d)){out.endDate=ymd(d);out.endTime=pad(d.getHours())+':'+pad(d.getMinutes())}}
+  return out;
+}
+async function fetchCalEvents(calId,now,until){
+  if(gDirect){
+    let items=[],tok='';
+    for(let i=0;i<4;i++){
+      const j=await gfetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calId)+'/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin='+encodeURIComponent(now.toISOString())+'&timeMax='+encodeURIComponent(until.toISOString())+(tok?'&pageToken='+encodeURIComponent(tok):''),SC_CAL);
+      items=items.concat(j.items||[]); tok=j.nextPageToken; if(!tok) break;
+    }
+    return items;
+  }
+  let props={};
+  try{const d=await mcp.describeTool(GC,'list_events'); props=(d&&d.inputSchema&&d.inputSchema.properties)||{}}catch(e){}
+  const pick=(...n)=>n.find(k=>k in props);
+  const input={};
+  input[pick('calendarId','calendar_id','calendar')||'calendarId']=calId;
+  input[pick('timeMin','time_min','startTime','start_time','start')||'timeMin']=now.toISOString();
+  input[pick('timeMax','time_max','endTime','end_time','end')||'timeMax']=until.toISOString();
+  const mx=pick('maxResults','max_results','pageSize','page_size','limit'); if(mx) input[mx]=250;
+  const r=await mcp.callTool(GC,'list_events',input,{cache:false});
+  return arr(r.payload,['events','items','data']);
+}
+const toFound=items=>items.map(x=>{const t=evTimes(x);return t?Object.assign({summary:x.summary||x.title||'',desc:x.description||'',location:x.location||''},t):null}).filter(Boolean);
+function renderExtraCals(cals){
+  const ex=st.gcalExtra||[];
+  const list=cals.filter(c=>c.id!==st.gcalId);
+  $('#gcExtra').innerHTML=list.length?`<div class="eyebrow">יומנים נוספים שמהם לקחת שיעורים וזמן תפוס</div><div class="row">${list.map((c,i)=>`<label class="chk"><input type="checkbox" id="gcx${i}" data-gcx="${esc(c.id)}" ${ex.includes(c.id)?'checked':''}>${esc(c.name)}</label>`).join('')}</div><p class="small muted">כל אירוע עם שעה ביומנים שתסמני (למשל שיעורים או משמרות שהכנסת בעצמך) ייכנס כזמן תפוס. מבחנים והגשות נלקחים רק מיומן ה-Moodle.</p>`:'';
+  $('#gcExtra').hidden=!list.length;
+}
+function evStart(x){
+  const st_=x&&(x.start||x.startTime||x.start_time);
+  const v=typeof st_==='string'?st_:(st_&&(st_.dateTime||st_.date_time||st_.date))||'';
+  if(!v) return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return {date:v,time:'09:00'};
+  const d=new Date(v); if(isNaN(d)) return null;
+  return {date:ymd(d),time:pad(d.getHours())+':'+pad(d.getMinutes())};
+}
+function gcErr(e,retry){
+  const c=e&&e.code;
+  if(gDirect){ setGc('err',directMsg(c,'היומן')); $('#gcBtn').hidden=false; $('#gcBtn').textContent=st.gcalOn?'סנכרון עכשיו':'התחברות עם Google וסנכרון'; return }
+  if(e&&e.retryable&&retry){setGc('','Google Calendar לא ענה. מנסה שוב…');setTimeout(()=>gcalSync(false,false),Math.max(e.retryAfterMs||0,2000+Math.random()*2000));return}
+  const msg={
+    server_not_connected:'Google Calendar לא מחובר לחשבון שלך ב-claude.ai. מחברים אותו בהגדרות ← Connectors (שלב 3), ואז לוחצים שוב.',
+    needs_reauth:'החיבור ל-Google Calendar פג. מחברים אותו מחדש ב-claude.ai בהגדרות ← Connectors, ואז לוחצים שוב.',
+    selection_required:'יש יותר מחשבון Google Calendar אחד מחובר. בחרו חשבון בחלון ש-claude.ai מציג, ולחצו שוב.',
+    approval_required:'לא אושרה גישה ל-Google Calendar. לוחצים על הכפתור ומאשרים בחלון שנפתח.',
+    not_in_manifest:'הגישה ל-Google Calendar כבויה לדף הזה. אפשר להפעיל אותה מתפריט ההרשאות של הדף.',
+    blocked_by_policy:'הארגון שלך חוסם גישה ל-Google Calendar מהדף הזה. אפשר להשתמש בייבוא קובץ.',
+    tool_error:'Google Calendar החזיר שגיאה. בדקו שבחרתם את היומן הנכון ונסו שוב.'
+  }[c]||'לא הצלחתי לסנכרן כרגע. נסו שוב בעוד דקה.';
+  setGc('err',msg); $('#gcBtn').hidden=false;
+  if(['server_not_connected','needs_reauth','not_in_manifest','blocked_by_policy','approval_required'].includes(c)){st.gcalOn=false;save();if(gcTimer){clearInterval(gcTimer);gcTimer=null}}
+}
+async function gcalSync(retry,interactive){
+  if((!mcp&&!gDirect)||gcBusy) return;
+  gcBusy=true; $('#gcBtn').disabled=true; setGc('','מסנכרן עם Google Calendar…');
+  const tokP=gDirect?gToken(SC_CAL,!!interactive):null;
+  try{
+    let cals;
+    if(gDirect){
+      await tokP;
+      const j=await gfetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader&maxResults=250',SC_CAL);
+      cals=(j.items||[]).map(c=>({id:c.id,name:c.summaryOverride||c.summary||c.id}));
+    }else{
+      const cl=await mcp.callTool(GC,'list_calendars',{},{cache:false});
+      cals=arr(cl.payload,['calendars','items','data']).map(c=>({id:c.id||c.calendarId||c.calendar_id,name:c.summary||c.name||c.title||c.id})).filter(c=>c.id);
+    }
+    if(!st.gcalId||!cals.some(c=>c.id===st.gcalId)){
+      const g=cals.find(c=>/moodle|מודל|colman|מינהל|college|מכללה/i.test(c.name+' '+c.id));
+      st.gcalId=g?g.id:'';
+    }
+    $('#gcCal').innerHTML='<option value="">בחרו יומן…</option>'+cals.map(c=>`<option value="${esc(c.id)}" ${c.id===st.gcalId?'selected':''}>${esc(c.name)}</option>`).join('');
+    $('#gcCalWrap').hidden=false;
+    st.gcalExtra=(st.gcalExtra||[]).filter(id=>id!==st.gcalId&&cals.some(c=>c.id===id));
+    renderExtraCals(cals);
+    if(!st.gcalId){ save(); setGc('','לא מצאתי יומן שנראה כמו Moodle. בחרו את היומן מהרשימה.'); return }
+    const now=new Date(), until=addDays(now,120);
+    const items=await fetchCalEvents(st.gcalId,now,until);
+    let extraFound=[];
+    for(const id of st.gcalExtra) extraFound=extraFound.concat(toFound(await fetchCalEvents(id,now,until)));
+    const exRes=ingestCalendar(extraFound,'gcal-extra',true);
+    const res=ingestCalendar(toFound(items),'gcal');
+    if(st.gcalExtra.length) $('#syncResult').insertAdjacentHTML('beforeend',`<div class="warnbox" style="margin-top:6px">${exRes.html}</div>`);
+    const n=new Date(); st.gcalOn=true; save();
+    setGc('ok','מסונכרן עם Google Calendar · נבדק ב-'+pad(n.getHours())+':'+pad(n.getMinutes())+' · '+(res.added+res.updated+res.busy+exRes.busy?res.added+' מבחנים והגשות, '+(res.busy+exRes.busy)+' שיעורים וזמן תפוס':'אין שינויים')+' · בדיקה חוזרת כל 30 דקות');
+    $('#gcBtn').textContent='סנכרון עכשיו';
+    if(!gcTimer) gcTimer=setInterval(()=>gcalSync(true,false),30*60*1000);
+  }catch(e){ gcErr(e,retry) }
+  finally{ gcBusy=false; $('#gcBtn').disabled=false; $('#gcBtn').hidden=false }
+}
+function setMdMode(m){
+  st.mdMode=m; save();
+  $('#mdModeFile').checked=m!=='gcal'; $('#mdModeG').checked=m==='gcal';
+  $('#mdFile').hidden=m==='gcal'; $('#mdG').hidden=m!=='gcal';
+}
+document.querySelectorAll('input[name="mdMode"]').forEach(r=>r.addEventListener('change',()=>setMdMode(r.value)));
+setMdMode(st.mdMode||'file');
+$('#gcBtn').onclick=()=>gcalSync(true,true);
+$('#gcCal').onchange=()=>{st.gcalId=$('#gcCal').value;save();if(st.gcalId) gcalSync(true,false)};
+function initGcal(){
+  if(!mcp&&!window.claude&&GOOGLE_CLIENT_ID){
+    gDirect=true; loadGis().catch(()=>{});
+    $('#gcStep3').innerHTML='לוחצים כאן <b>התחברות עם Google וסנכרון</b>, בוחרים את החשבון שבו הוספתם את יומן ה-Moodle, ומאשרים קריאה של היומן.';
+    $('#gcBtn').hidden=false; $('#gcBtn').textContent=st.gcalOn?'סנכרון עכשיו':'התחברות עם Google וסנכרון';
+    setGc('',st.gcalOn?'לחצו "סנכרון עכשיו" כדי לעדכן מהיומן. אחרי ההתחברות הבדיקה חוזרת כל 30 דקות כשהדף פתוח.':'אחרי שלבים 1 ו-2 לוחצים על הכפתור. האפליקציה רק קוראת מהיומן, לא משנה בו כלום, והנתונים נשארים בדפדפן שלך.');
+    return;
+  }
+  if(!mcp){ setGc('',window.claude?'סנכרון אוטומטי זמין כשפותחים את הקישור ב-claude.ai עם חשבון שמחובר אליו Google Calendar. בינתיים אפשר לייבא קובץ.':'הסנכרון האוטומטי עוד לא הוגדר באתר הזה. בינתיים אפשר לייבא קובץ.'); return }
+  $('#gcBtn').hidden=false;
+  if(st.gcalOn) gcalSync(true,false);
+  else setGc('','אחרי שלבים 1 עד 3 לוחצים על הכפתור ומאשרים גישה. האפליקציה רק קוראת מהיומן, לא משנה בו כלום.');
+}
+
+render(); checkAlerts();
+let lastMin=new Date().getMinutes(), lastDay=ymd(today0());
+setInterval(()=>{
+  const n=new Date();
+  if(ymd(today0())!==lastDay){lastDay=ymd(today0());render()}
+  else if(n.getMinutes()!==lastMin){lastMin=n.getMinutes();renderDocket();renderEvents();checkAlerts()}
+  renderAlert();
+},1000);
+})();
+</script>
+
+<section id="privacyView" hidden style="max-width:680px;margin:0 auto;padding-block:24px;line-height:1.7">
+<h1>מדיניות פרטיות: לוח דין</h1>
+<p>לוח דין הוא מתכנן לימודים שרץ כולו בדפדפן שלך. אין לו שרת, ואין בו הרשמה.</p>
+<h2>איזה מידע נשמר</h2>
+<p>מבחנים, אילוצים, משימות, ציונים ומיילים שהוספת נשמרים רק בדפדפן שלך (localStorage). הם לא נשלחים אלינו ולא לאף צד שלישי. מחיקה של נתוני האתר בדפדפן, או הכפתור "התחלה מאפס", מוחקת אותם.</p>
+<h2>התחברות עם Google</h2>
+<p>אם בחרת להתחבר עם Google, האפליקציה מבקשת הרשאת <b>קריאה בלבד</b> ליומן Google (calendar.readonly), כדי לייבא מבחנים והגשות מיומן ה-Moodle שלך. היא לא יוצרת, לא משנה ולא מוחקת אירועים. אם הופעלה גם קריאת מיילים, ההרשאה היא קריאה בלבד (gmail.readonly), ונקראים רק מיילים שנשלחו מכתובת המכללה שהוגדרה.</p>
+<p>אסימון ההתחברות נשמר רק בזיכרון הדף, לשעה לכל היותר, ונמחק כשסוגרים את הדף. המידע שנקרא מ-Google מוצג ונשמר רק בדפדפן שלך.</p>
+<p>השימוש של האפליקציה במידע שמתקבל מ-Google APIs עומד ב-<a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, כולל דרישות ה-Limited Use.</p>
+<h2>ביטול גישה</h2>
+<p>אפשר לבטל את הגישה בכל רגע בדף <a href="https://myaccount.google.com/permissions">הרשאות של חשבון Google</a>.</p>
+<p><a href="#">חזרה לאפליקציה</a></p>
+</section>
+<script>(function(){function r(){var p=location.hash==="#privacy";document.getElementById("privacyView").hidden=!p;document.querySelector(".wrap").hidden=p;window.scrollTo(0,0)}window.addEventListener("hashchange",r);r()})();</script>
+<footer style="text-align:center;font-size:.8rem;padding:24px 16px"><a href="#privacy">מדיניות פרטיות</a></footer>
+</body>
+</html>
