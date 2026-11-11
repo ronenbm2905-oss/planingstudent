@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="לוח דין: מתכנן לימודים ולו״ז לסטודנטים למשפטים.">
+<meta name="description" content="שעת דין: מתכנן לימודים ולו״ז לסטודנטים למשפטים.">
 </head>
 <body>
-<title>לוח דין</title>
+<title>שעת דין</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: ink-on-paper docket. Header + live alert strip, then week grid (main) beside the day docket (side), then a band of registers: exams, constraints, tasks, college updates, decisions. */
@@ -188,7 +188,7 @@ details summary{cursor:pointer;color:var(--accent);font-weight:600}
   <header class="top">
     <div class="brand">
       <div class="eyebrow">מתכנן לימודים לסטודנטים למשפטים</div>
-      <h1>לוח דין</h1>
+      <h1>שעת דין</h1>
       <p>מבחנים, הגשות, עבודה ומילואים בלוח אחד. הלו״ז נבנה מחדש בכל שינוי.</p>
     </div>
     <div class="row">
@@ -1027,7 +1027,7 @@ function checkAlerts(){
         for(const [t2] of THRESH) if(ms<=t2) st.alerts[e.id+':'+t2]=1;
         const msg=`<b>${e.kind==='exam'?'מבחן':'הגשה'} בעוד פחות מ${label}:</b> ${esc(e.course)}, ${esc(e.title)} (${dm(e.date)} ${e.time})`;
         toast(msg);
-        if(notifOK){try{new Notification('לוח דין',{body:msg.replace(/<[^>]+>/g,'')})}catch(x){}}
+        if(notifOK){try{new Notification('שעת דין',{body:msg.replace(/<[^>]+>/g,'')})}catch(x){}}
         save(); break;
       }
     }
@@ -1489,8 +1489,8 @@ setInterval(()=>{
 </script>
 
 <section id="privacyView" hidden style="max-width:680px;margin:0 auto;padding-block:24px;line-height:1.7">
-<h1>מדיניות פרטיות: לוח דין</h1>
-<p>לוח דין הוא מתכנן לימודים שרץ כולו בדפדפן שלך. אין לו שרת, ואין בו הרשמה.</p>
+<h1>מדיניות פרטיות: שעת דין</h1>
+<p>שעת דין הוא מתכנן לימודים שרץ כולו בדפדפן שלך. אין לו שרת, ואין בו הרשמה.</p>
 <h2>איזה מידע נשמר</h2>
 <p>מבחנים, אילוצים, משימות, ציונים ומיילים שהוספת נשמרים רק בדפדפן שלך (localStorage). הם לא נשלחים אלינו ולא לאף צד שלישי. מחיקה של נתוני האתר בדפדפן, או הכפתור "התחלה מאפס", מוחקת אותם.</p>
 <h2>התחברות עם Google</h2>
