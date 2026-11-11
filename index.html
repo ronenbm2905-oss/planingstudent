@@ -267,6 +267,28 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .simcell b{width:2.4em;text-align:center;font-variant-numeric:tabular-nums}
 .install{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
 .installsteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.quick{display:flex;gap:8px}
+.quick input{flex:1;min-width:0;padding:9px 12px;border-radius:10px}
+.qprev{font-size:.86rem;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px dashed var(--accent)}
+.qprev.bad{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--surface))}
+.holchip{display:block;font-size:.68rem;font-weight:700;color:var(--gold);margin-top:1px}
+.heat{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.heat .hd{font-size:.72rem;color:var(--muted);text-align:center;font-weight:600}
+.hcell{border:1px solid var(--line);border-radius:10px;padding:6px;min-height:64px;display:flex;flex-direction:column;gap:2px;text-align:right;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink)}
+.hcell:hover{border-color:var(--accent)}
+.hcell .hn{font-size:.8rem;font-weight:700;font-variant-numeric:tabular-nums}
+.hcell .hm{font-size:.68rem;color:var(--muted)}
+.hcell .hx{font-size:.68rem;font-weight:700;color:var(--danger)}
+.hcell.past{opacity:.4}
+.hcell.today{outline:2px solid var(--accent);outline-offset:-1px}
+.hcell.rest{background:repeating-linear-gradient(-45deg,var(--hatch) 0 6px,var(--surface) 6px 12px)}
+.lv0,.hcell.l0{background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.lv1,.hcell.l1{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}
+.lv2,.hcell.l2{background:color-mix(in srgb,var(--warn) 32%,var(--surface))}
+.lv3,.hcell.l3{background:color-mix(in srgb,var(--danger) 34%,var(--surface))}
+.legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:4px;vertical-align:middle;border:1px solid var(--line)}
+@media (max-width:700px){.hcell{min-height:52px;padding:4px}.hcell .hm{display:none}}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -283,6 +305,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </header>
   <nav class="nav" aria-label="עמודי האפליקציה">
     <a href="#home">לו״ז ויום</a>
+    <a href="#load">עומס חודשי</a>
     <a href="#exams">מבחנים והגשות</a>
     <a href="#topics">תוכנית לימוד</a>
     <a href="#constraints">אילוצים</a>
@@ -306,6 +329,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <button type="button" id="shareBtn">שיתוף השבוע</button>
         </div>
       </div>
+      <form class="quick" id="quickForm" autocomplete="off">
+        <input id="qText" placeholder="הוספה מהירה, למשל: מבחן בנזיקין ב-20/12 ב-9 · להגיש עבודה בחוזים ביום שלישי · משמרת מחר 16-20" aria-label="הוספה מהירה">
+        <button class="primary" type="submit">הוספה</button>
+      </form>
+      <div class="qprev" id="qPrev" hidden></div>
       <div class="sharebox" id="shareBox" hidden>
         <div class="row"><label style="flex:1 1 180px">השם שיופיע לחבר/ה<input id="shName" placeholder="מור"></label>
         <label class="chk"><input type="checkbox" id="shBusy">רק זמנים תפוסים, בלי פרטים</label>
@@ -349,6 +377,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     </section>
   </div>
 
+  <div class="page" data-page="load" hidden>
+    <section class="panel">
+      <div class="spread"><div><div class="eyebrow">מפת עומס</div><h2>איך נראים השבועות הקרובים</h2></div>
+        <div class="legend small"><span><i class="lv0"></i>רגוע</span><span><i class="lv1"></i>בינוני</span><span><i class="lv2"></i>עמוס</span><span><i class="lv3"></i>עמוס מאוד</span></div></div>
+      <div id="loadWarn"></div>
+      <div class="heat" id="heat"></div>
+      <p class="small muted" style="margin:0">הצבע לפי כמה מהיום תפוס: לימוד, שיעורים, עבודה ומבחנים. לחיצה על יום פותחת אותו בלו״ז.</p>
+    </section>
+  </div>
+
   <div class="page" data-page="topics" hidden>
     <section class="panel">
       <div><div class="eyebrow">תוכנית לימוד</div><h2>נושאים לכל קורס</h2></div>
@@ -388,6 +426,21 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label class="wide conClass" hidden>כיתה<input id="conLoc" placeholder="בניין A, כיתה 204"></label>
           <label class="wide conClass" hidden>מרצה<input id="conTeacher" placeholder="ד״ר ישראלי"></label>
           <button class="primary" type="submit">הוספת אילוץ</button>
+        </form>
+      </details>
+    </section>
+    <section class="panel">
+      <div><div class="eyebrow">ימים מיוחדים</div><h2>חגים, חופשות וימים בלי שיעורים</h2></div>
+      <p class="small muted" style="margin:0">החגים נכנסים לבד לפי הלוח העברי. בחגים לא מתוכנן לימוד, בערב חג לומדים עד 14:00, ובחול המועד וביום העצמאות אין שיעורים אבל אפשר ללמוד. אפשר לכבות את זה בעמוד ההגדרות.</p>
+      <ul class="clist" id="holList"></ul>
+      <details>
+        <summary>הוספת יום מיוחד (חופשה, יום בלי שיעורים)</summary>
+        <form class="add" id="spForm" style="margin-top:10px">
+          <label class="wide">מה זה<input id="spLabel" required placeholder="חופשת סמסטר"></label>
+          <label>מתאריך<input type="date" id="spFrom" required></label>
+          <label>עד תאריך<input type="date" id="spTo"></label>
+          <label class="wide">סוג<select id="spType"><option value="noclass">אין שיעורים (אפשר ללמוד)</option><option value="rest">יום חופש מלא (בלי לימוד)</option></select></label>
+          <button class="primary" type="submit">הוספה</button>
         </form>
       </details>
     </section>
@@ -545,6 +598,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           <label>אורך סשן (דק׳)<input type="number" id="sSess" min="30" max="180" step="15"></label>
           <label>הפסקה (דק׳)<input type="number" id="sBrk" min="0" max="90" step="5"></label>
           <label class="chk"><input type="checkbox" id="sShab">ללמוד גם בשבת ובשישי אחה״צ</label>
+          <label class="chk"><input type="checkbox" id="sHol">להתחשב בחגים ובערבי חג</label>
         </div>
       <div class="row">
         <button id="btnNotify" type="button">הפעלת התראות מערכת</button>
@@ -676,6 +730,7 @@ function normalize(x){
   if(!x.topics||typeof x.topics!=='object') x.topics={};
   ['events','constraints','tasks','inbox'].forEach(k=>{if(!Array.isArray(x[k])) x[k]=[]});
   if(!x.alerts) x.alerts={};
+  if(!Array.isArray(x.special)) x.special=[];
   x.constraints=x.constraints.filter(c=>!(c.src&&/הקלט|recording/i.test(c.title||'')));
   return x;
 }
@@ -739,6 +794,47 @@ function phase(e,key){
   if(dl<=10) return 'הלכות ופסקי דין מרכזיים';
   return 'קריאת חומר ובניית סיכום';
 }
+/* ---------- holidays (Hebrew calendar via Intl) ---------- */
+let HEB=null; try{HEB=new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long'})}catch(e){}
+const holCache={};
+function hebOf(d){const ps=HEB.formatToParts(d);return {day:+ps.find(p=>p.type==='day').value,month:ps.find(p=>p.type==='month').value}}
+function holidayOf(key){
+  if(key in holCache) return holCache[key];
+  let h=null;
+  if(HEB){
+    const d=parseYmd(key); d.setHours(12); const {day,month}=hebOf(d), dow=d.getDay();
+    const M=(m,a,b)=>month===m&&day>=a&&day<=(b??a);
+    if(M('Elul',29)) h={name:'ערב ראש השנה',type:'erev'};
+    else if(M('Tishri',1,2)) h={name:'ראש השנה',type:'rest'};
+    else if(M('Tishri',9)) h={name:'ערב יום כיפור',type:'erev'};
+    else if(M('Tishri',10)) h={name:'יום כיפור',type:'rest'};
+    else if(M('Tishri',14)) h={name:'ערב סוכות',type:'erev'};
+    else if(M('Tishri',15)) h={name:'סוכות',type:'rest'};
+    else if(M('Tishri',16,20)) h={name:'חול המועד סוכות',type:'noclass'};
+    else if(M('Tishri',21)) h={name:'הושענא רבה',type:'erev'};
+    else if(M('Tishri',22)) h={name:'שמחת תורה',type:'rest'};
+    else if(M('Nisan',14)) h={name:'ערב פסח',type:'erev'};
+    else if(M('Nisan',15)) h={name:'פסח',type:'rest'};
+    else if(M('Nisan',16,19)) h={name:'חול המועד פסח',type:'noclass'};
+    else if(M('Nisan',20)) h={name:'ערב שביעי של פסח',type:'erev'};
+    else if(M('Nisan',21)) h={name:'שביעי של פסח',type:'rest'};
+    else if(M('Sivan',5)) h={name:'ערב שבועות',type:'erev'};
+    else if(M('Sivan',6)) h={name:'שבועות',type:'rest'};
+    else if((month==='Adar'||month==='Adar II')&&day===14) h={name:'פורים',type:'info'};
+    else if(month==='Nisan'&&((day===27&&dow!==5&&dow!==0)||(day===26&&dow===4)||(day===28&&dow===1))) h={name:'יום השואה',type:'info'};
+    else if(month==='Iyar'&&((day===5&&dow===3)||(day===4&&dow===4)||(day===3&&dow===4)||(day===6&&dow===2))) h={name:'יום העצמאות',type:'noclass'};
+    else if(month==='Iyar'&&((day===4&&dow===2)||(day===3&&dow===3)||(day===2&&dow===3)||(day===5&&dow===1))) h={name:'יום הזיכרון',type:'info'};
+    else if(month==='Av'&&((day===9&&dow!==6)||(day===10&&dow===0))) h={name:'תשעה באב',type:'info'};
+    else if(month==='Kislev'||month==='Tevet'){for(let k=0;k<8;k++){const x=addDays(d,-k);const hx=hebOf(x);if(hx.month==='Kislev'&&hx.day===25){h={name:'חנוכה',type:'info'};break}}}
+  }
+  return holCache[key]=h;
+}
+function dayInfo(key){
+  const sp=(st.special||[]).find(x=>key>=x.from&&key<=(x.to||x.from));
+  if(sp) return {name:sp.label,type:sp.type,special:sp.id};
+  if(st.settings.holidays===false) return null;
+  return holidayOf(key);
+}
 function buildPlan(){
   const s=st.settings, T=today0(), tk=ymd(T);
   const evs=st.events.filter(e=>e.date>=tk).map(e=>Object.assign({},e,{rem:(+e.hours||0)*60,planned:0}));
@@ -748,13 +844,14 @@ function buildPlan(){
   const ws0=addDays(T,-T.getDay()+weekOffset*7+6);
   let last=ymd(ws0);
   for(const e of evs) if(e.date>last) last=e.date;
-  const horizon=Math.min(120,Math.max(0,diffDays(tk,last)));
+  const horizon=Math.min(120,Math.max(42,diffDays(tk,last)));
   const days={};
   for(let i=0;i<=horizon;i++){
     const d=addDays(T,i), key=ymd(d), dow=d.getDay();
     let ws=toMin(s.dayStart), we=toMin(s.dayEnd);
     const blocks=[], busy=[];
     let budget=(+s.maxHours||6)*60;
+    const hol=dayInfo(key);
     for(const m of st.manual||[]){
       if(m.date!==key) continue;
       const a=toMin(m.start), b=toMin(m.end), e=evMap[m.evId]||null;
@@ -763,6 +860,8 @@ function buildPlan(){
     }
     for(const c of st.constraints){
       if(!applies(c,key,dow)) continue;
+      if(hol&&c.days&&(hol.type==='rest'||(hol.type==='noclass'&&c.kind==='class'))) continue;
+      if(hol&&hol.type==='noclass'&&c.kind==='class'&&c.src) continue;
       const a=c.allDay?ws:toMin(c.start), b=c.allDay?we:toMin(c.end);
       blocks.push({type:'fixed',cid:c.id,kind:c.kind,title:c.title,start:a,end:b,allDay:!!c.allDay,location:c.location||'',teacher:c.teacher||''});
       busy.push([a,b]);
@@ -778,6 +877,8 @@ function buildPlan(){
     }
     let rest=false;
     if(!s.shabbat){ if(dow===6) rest=true; if(dow===5) we=Math.min(we,toMin('14:00')); }
+    if(hol&&hol.type==='rest') rest=true;
+    if(hol&&hol.type==='erev') we=Math.min(we,toMin('14:00'));
     if(i===0){const n=new Date();ws=Math.max(ws,Math.ceil((n.getHours()*60+n.getMinutes())/30)*30)}
     if(examEnd!==null){ ws=Math.max(ws,examEnd+60); budget=Math.min(budget,120); }
     if(!rest && ws<we){
@@ -797,7 +898,7 @@ function buildPlan(){
       }
     }
     blocks.sort((x,y)=>(y.allDay?1:0)-(x.allDay?1:0)||x.start-y.start);
-    days[key]={key,date:d,blocks,rest};
+    days[key]={key,date:d,blocks,rest,hol};
   }
   const byId={}; for(const e of evs) byId[e.id]=e;
   return {days,byId};
@@ -831,11 +932,11 @@ function renderWeek(){
     if(key<tk) inner='<div class="blk rest">יום שעבר</div>';
     else if(day){
       inner=day.blocks.map(blockHtml).join('');
-      if(day.rest) inner+='<div class="blk rest">מנוחה</div>';
+      if(day.rest) inner+=`<div class="blk rest">${day.hol&&day.hol.type==='rest'?esc(day.hol.name):'מנוחה'}</div>`;
       const sm=day.blocks.filter(b=>b.type==='study').reduce((a,b)=>a+b.end-b.start,0);
       inner+=`<div class="dsum num">${sm?hrs(sm)+' ש׳ לימוד':'ללא לימוד'}</div>`;
     }
-    h+=`<button type="button" class="${cls.join(' ')}" data-day="${key}"><span class="dname">${DAYS[d.getDay()]}</span><span class="ddate num">${d.getDate()}/${d.getMonth()+1}</span>${inner}</button>`;
+    h+=`<button type="button" class="${cls.join(' ')}" data-day="${key}"><span class="dname">${DAYS[d.getDay()]}</span><span class="ddate num">${d.getDate()}/${d.getMonth()+1}</span>${day&&day.hol?`<span class="holchip">${esc(day.hol.name)}</span>`:''}${inner}</button>`;
   }
   $('#week').innerHTML=h;
   const short=Object.values(plan.byId).filter(e=>e.rem>0);
@@ -918,7 +1019,7 @@ function tickExamDay(){
 }
 function renderDocket(){
   const d=parseYmd(selDay), tk=ymd(today0());
-  $('#dayTitle').textContent='יום '+DAYS[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1);
+  {const hi=dayInfo(selDay); $('#dayTitle').textContent='יום '+DAYS[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+(hi?' · '+hi.name:'');}
   const day=plan.days[selDay];
   const now=new Date(), nm=now.getHours()*60+now.getMinutes();
   let h='';
@@ -1508,9 +1609,9 @@ function renderAlert(){
 /* ---------- render all ---------- */
 function render(){
   plan=buildPlan();
-  renderWeek(); renderDocket(); renderEvents(); renderConstraints(); renderTasks(); renderGrades(); renderTopics(); renderMail(); renderAlert(); renderDs();
+  renderWeek(); renderDocket(); renderEvents(); renderConstraints(); renderTasks(); renderGrades(); renderTopics(); renderMail(); renderAlert(); renderDs(); renderHolidays(); renderLoad(); warnOverload();
   const s=st.settings;
-  $('#sStart').value=s.dayStart; $('#sEnd').value=s.dayEnd; $('#sMax').value=s.maxHours; $('#sSess').value=s.session; $('#sBrk').value=s.brk; $('#sShab').checked=!!s.shabbat;
+  $('#sStart').value=s.dayStart; $('#sEnd').value=s.dayEnd; $('#sMax').value=s.maxHours; $('#sSess').value=s.session; $('#sBrk').value=s.brk; $('#sShab').checked=!!s.shabbat; $('#sHol').checked=s.holidays!==false;
 }
 function goTo(key){
   if(location.hash&&location.hash!=='#home') location.hash='#home';
@@ -1520,7 +1621,7 @@ function goTo(key){
 
 /* ---------- events ---------- */
 document.addEventListener('click',ev=>{
-  const t=ev.target.closest('[data-addev],[data-unoff],[data-gapply],[data-gcancel],[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
+  const t=ev.target.closest('[data-delsp],[data-addev],[data-unoff],[data-gapply],[data-gcancel],[data-topicdone],[data-tpdel],[data-exbdel],[data-delsrc],[data-mblock],[data-edit],[data-edact],[data-day],[data-delg],[data-delev],[data-delcon],[data-deltk],[data-mact],[data-mtask],[data-mdel],[data-go]');
   if(!t) return;
   const ds=t.dataset;
   if(ds.edit!==undefined){const i=+ds.edit;editIdx=editIdx===i?null:i;renderDocket();return}
@@ -1530,6 +1631,7 @@ document.addEventListener('click',ev=>{
   if(ds.delg) st.grades=st.grades.filter(g=>g.id!==ds.delg);
   if(ds.delev){st.events=st.events.filter(e=>e.id!==ds.delev);st.manual=st.manual.filter(m=>m.evId!==ds.delev)}
   if(ds.delcon) st.constraints=st.constraints.filter(c=>c.id!==ds.delcon);
+  if(ds.delsp){st.special=(st.special||[]).filter(x=>x.id!==ds.delsp)}
   if(ds.addev){const have=new Set(st.grades.map(g=>normCourse(g.course)));const tk=ymd(today0());[...new Set(st.events.filter(e=>e.date>=tk).map(e=>e.course))].filter(c=>c&&!have.has(normCourse(c))).forEach(c=>st.grades.push({id:uid(),course:c,credits:0,hw:null,hwW:0,exam:null,target:numOrNull(st.gpaTarget)??85}));toast('הקורסים נוספו. כדאי למלא לכל אחד נ״ז.')}
   if(ds.unoff){const g=st.grades.find(x=>x.id===ds.unoff); if(g){delete g.official; toast('הציון מהגיליון בוטל. הציון מחושב שוב מהעבודה והמבחן.')}}
   if(ds.gcancel!==undefined){gImport=null;$('#gPreview').innerHTML='';return}
@@ -1573,10 +1675,10 @@ document.addEventListener('change',ev=>{
     save(); renderGrades(); if(f==='course') renderEvents(); return;
   }
   if(t.dataset&&t.dataset.tk){const x=st.tasks.find(k=>k.id===t.dataset.tk); x.done=t.checked; save(); renderTasks(); renderDocket(); return}
-  if(['sStart','sEnd','sMax','sSess','sBrk','sShab'].includes(t.id)){
+  if(['sStart','sEnd','sMax','sSess','sBrk','sShab','sHol'].includes(t.id)){
     const s=st.settings;
     s.dayStart=$('#sStart').value||'08:00'; s.dayEnd=$('#sEnd').value||'22:00';
-    s.maxHours=Math.max(1,+$('#sMax').value||6); s.session=Math.max(30,+$('#sSess').value||90); s.brk=Math.max(0,+$('#sBrk').value||0); s.shabbat=$('#sShab').checked;
+    s.maxHours=Math.max(1,+$('#sMax').value||6); s.session=Math.max(30,+$('#sSess').value||90); s.brk=Math.max(0,+$('#sBrk').value||0); s.shabbat=$('#sShab').checked; s.holidays=$('#sHol').checked;
     save(); render();
   }
 });
@@ -2181,8 +2283,141 @@ addEventListener('appinstalled',()=>{installEv=null;toast('שעת הדין הו�
 $('#installBtn').onclick=async()=>{if(!installEv)return;installEv.prompt();try{await installEv.userChoice}catch(e){}installEv=null;renderInstall()};
 renderInstall();
 
+/* ---------- special days list ---------- */
+function renderHolidays(){
+  const tk=ymd(today0()), out=[];
+  for(let i=0;i<200&&out.length<10;i++){const key=ymd(addDays(today0(),i)),h=holidayOf(key);if(h&&h.type!=='info'&&!(out.length&&out[out.length-1].name===h.name&&diffDays(out[out.length-1].to,key)===1)) out.push({name:h.name,from:key,to:key,type:h.type}); else if(h&&h.type!=='info'&&out.length) out[out.length-1].to=key}
+  const T={rest:'חג, בלי לימוד',erev:'לימוד עד 14:00',noclass:'אין שיעורים'};
+  const sp=(st.special||[]).filter(x=>(x.to||x.from)>=tk).map(x=>`<li><span class="pill gray">שלך</span><span class="tx"><span class="main">${esc(x.label)}</span><div class="due num">${dm(x.from)}${x.to&&x.to!==x.from?'–'+dm(x.to):''} · ${x.type==='rest'?'יום חופש מלא':'אין שיעורים'}</div></span><button class="ghost" type="button" data-delsp="${x.id}" aria-label="מחיקה">✕</button></li>`).join('');
+  const hol=st.settings.holidays===false?'<li class="muted small">ההתחשבות בחגים כבויה בהגדרות.</li>':out.map(h=>`<li><span class="pill gray">חג</span><span class="tx"><span class="main">${esc(h.name)}</span><div class="due num">${dm(h.from)}${h.to!==h.from?'–'+dm(h.to):''} · ${T[h.type]}</div></span></li>`).join('');
+  $('#holList').innerHTML=sp+hol||'<li class="muted">אין ימים מיוחדים בחודשים הקרובים.</li>';
+}
+$('#spForm').onsubmit=e=>{e.preventDefault();const from=$('#spFrom').value,to=$('#spTo').value||from;if(to<from){toast('תאריך הסיום לפני תאריך ההתחלה.');return}
+  (st.special=st.special||[]).push({id:uid(),label:$('#spLabel').value.trim(),from,to,type:$('#spType').value});e.target.reset();save();render();toast('היום המיוחד נוסף, והלו״ז חושב מחדש.')};
+
+/* ---------- monthly load map ---------- */
+function dayLoad(day){
+  const s=st.settings, win=Math.max(60,toMin(s.dayEnd)-toMin(s.dayStart));
+  let m=0,ex=0,dl=0;
+  for(const b of day.blocks){
+    if(b.type==='exam'){ex++;m+=b.end-b.start}
+    else if(b.type==='deadline') dl++;
+    else if(b.allDay) m+=win;
+    else m+=Math.max(0,b.end-b.start);
+  }
+  const r=Math.min(1,m/win);
+  return {r,m,ex,dl,lv:r<0.35?0:r<0.6?1:r<0.8?2:3};
+}
+function renderLoad(){
+  const T=today0(), tk=ymd(T), start=addDays(T,-T.getDay());
+  let h=DSHORT.map(x=>`<div class="hd">${x}</div>`).join('');
+  const weeks=[];
+  for(let w=0;w<6;w++){
+    const wk={from:ymd(addDays(start,w*7)),to:ymd(addDays(start,w*7+6)),items:0,study:0,heavy:0};
+    for(let i=0;i<7;i++){
+      const d=addDays(start,w*7+i), key=ymd(d), day=plan.days[key];
+      if(key<tk||!day){h+=`<div class="hcell past"><span class="hn">${d.getDate()}/${d.getMonth()+1}</span></div>`;continue}
+      const L=dayLoad(day); wk.items+=L.ex+L.dl; wk.study+=day.blocks.filter(b=>b.type==='study').reduce((a,b)=>a+b.end-b.start,0); if(L.lv>=3) wk.heavy++;
+      const marks=[L.ex?`${L.ex} מבחן`:'',L.dl?`${L.dl} הגשה`:''].filter(Boolean).join(' · ');
+      h+=`<button type="button" class="hcell ${day.rest?'rest':'l'+L.lv}${key===tk?' today':''}" data-heat="${key}" title="${hrs(L.m)} שעות תפוסות"><span class="hn">${d.getDate()}/${d.getMonth()+1}</span>${day.hol?`<span class="holchip">${esc(day.hol.name)}</span>`:''}<span class="hm">${hrs(L.m)} ש׳ תפוסות</span>${marks?`<span class="hx">${marks}</span>`:''}</button>`;
+    }
+    weeks.push(wk);
+  }
+  $('#heat').innerHTML=h;
+  const warns=[];
+  const short=Object.values(plan.byId).filter(e=>e.rem>0);
+  if(short.length) warns.push(`<b>אין מספיק זמן ללמוד:</b> ${short.map(e=>`${esc(e.course)} (חסרות ${hrs(e.rem)} ש׳)`).join(' · ')}.`);
+  weeks.forEach(w=>{ if(w.items>=2||w.heavy>=3) warns.push(`<b>שבוע ${dm(w.from)}–${dm(w.to)} עמוס במיוחד:</b> ${w.items?w.items+' מבחנים והגשות, ':''}${w.heavy} ימים עמוסים מאוד, ${hrs(w.study)} שעות לימוד מתוכננות.`) });
+  $('#loadWarn').innerHTML=warns.length?`<div class="warnbox" style="display:flex;flex-direction:column;gap:4px">${warns.map(x=>`<span>${x}</span>`).join('')}<span class="small">אפשר להקדים לימוד, להגדיל את מקסימום השעות ביום בהגדרות, או לפנות זמן באילוצים.</span></div>`:'<div class="warnbox" style="background:color-mix(in srgb,var(--ok) 12%,transparent)">השבועות הקרובים מאוזנים. אין עומס חריג.</div>';
+}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-heat]'); if(c) goTo(c.dataset.heat)});
+let lastShort=null;
+function warnOverload(){
+  const n=Object.values(plan.byId).filter(e=>e.rem>0).length;
+  if(lastShort!==null&&n>lastShort) toast('שימי לב: אין מספיק זמן פנוי לכל ההכנה. פרטים בעמוד "עומס חודשי".');
+  lastShort=n;
+}
+
+/* ---------- quick add (natural language) ---------- */
+const HDAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const GENERIC=new Set(['דיני','משפט','מבוא','יסודות','המקצוע','המשפטי','סדנת','סדנה','קורס','תורת','פרקים','בשיתוף']);
+function qDates(t){
+  const T=today0(), out=[];
+  const re=/(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?/g; let m;
+  while((m=re.exec(t))){let y=m[3]?+m[3]:T.getFullYear(); if(y<100) y+=2000; let dt=new Date(y,+m[2]-1,+m[1]); if(!m[3]&&dt<addDays(T,-30)) dt=new Date(y+1,+m[2]-1,+m[1]); out.push({d:dt,txt:m[0]})}
+  if(out.length) return out;
+  if(/מחרתיים/.test(t)) return [{d:addDays(T,2),txt:'מחרתיים'}];
+  if(/(^|[\s,])מחר(?![א-ת])/.test(t)) return [{d:addDays(T,1),txt:'מחר'}];
+  if(/(^|[\s,])(היום|הערב)(?![א-ת])/.test(t)) return [{d:T,txt:'היום'}];
+  m=t.match(/בעוד\s+(\d+|שבוע|שבועיים|יומיים|חודש)\s*(ימים|יום|שבועות)?/);
+  if(m){const n=m[1]==='שבוע'?7:m[1]==='שבועיים'?14:m[1]==='יומיים'?2:m[1]==='חודש'?30:(+m[1])*(/שבוע/.test(m[2]||'')?7:1);return [{d:addDays(T,n),txt:m[0]}]}
+  for(const i of [2,4,0,3,5,1,6]){const r=new RegExp('(^|[\\s,])(?:ביום\\s+|יום\\s+|ב|ה)?'+HDAYS[i]+'(?![א-ת])');const mm=t.match(r);if(mm){let delta=(i-T.getDay()+7)%7;if(delta===0)delta=7;if(/הבא/.test(t)&&delta<7)delta+=0;return [{d:addDays(T,delta),txt:mm[0]}]}}
+  return [];
+}
+function qTimes(t){
+  let m=t.match(/(?:מ-?|משעה\s*)?(\d{1,2})(?::(\d{2}))?\s*(?:-|–|עד)\s*(\d{1,2})(?::(\d{2}))?(?![./\d])/);
+  const fix=h=>h<7?h+12:h;
+  if(m&&+m[1]<=23&&+m[3]<=23) return {start:pad(fix(+m[1]))+':'+(m[2]||'00'),end:pad(fix(+m[3]))+':'+(m[4]||'00')};
+  m=t.match(/(?:בשעה|ב-?|שעה)\s*(\d{1,2})(?::(\d{2}))?(?![./\d])/);
+  if(m&&+m[1]<=23) return {start:pad(fix(+m[1]))+':'+(m[2]||'00')};
+  if(/בבוקר/.test(t)) return {start:'09:00'}; if(/בצהריים/.test(t)) return {start:'12:00'}; if(/אחה["״]?צ|אחר הצהריים/.test(t)) return {start:'15:00'}; if(/בערב/.test(t)) return {start:'19:00'}; if(/בלילה/.test(t)) return {start:'21:00'};
+  return {};
+}
+function qCourse(t){
+  const words=t.split(/[\s,.;:!?]+/).map(w=>w.replace(/^(?:וב|ב|ל|ה|ו|מ|ש)(?=[א-ת]{3,})/,''));
+  const list=[...new Set(courses().concat(st.constraints.filter(c=>c.kind==='class').map(c=>c.title.split(' · ')[0])))];
+  let best=null,bs=0;
+  for(const c of list){const cw=c.split(/\s+/).filter(w=>w.length>=3&&!GENERIC.has(w));let sc=0;cw.forEach(w=>{if(words.includes(w)||t.includes(w))sc++});if(sc>bs){bs=sc;best=c}}
+  return best;
+}
+function parseQuick(raw){
+  const t=raw.trim(); if(!t) return null;
+  let kind='task';
+  if(/מילואים/.test(t)) kind='miluim';
+  else if(/מבחן|בחינה|בוחן|מועד\s*[אב]/.test(t)) kind='exam';
+  else if(/משמרת|לעבוד|במשרד/.test(t)) kind='work';
+  else if(/להגיש|הגשה|הגשת|מטל|תרגיל|עבודה|רפרט|סמינריון/.test(t)) kind='submission';
+  else if(/שיעור|הרצאה|תרגול|סמינר(?!יון)/.test(t)) kind='class';
+  else if(/פגישה|תור |תור$|רופא|אירוע|יום הולדת|חתונה|ישיבה/.test(t)) kind='other';
+  const ds=qDates(t);
+  let rest=t; ds.forEach(x=>rest=rest.replace(x.txt,' '));
+  const tm=qTimes(rest);
+  const course=qCourse(t);
+  const date=ds[0]?ymd(ds[0].d):'', to=ds[1]?ymd(ds[1].d):'';
+  const weekly=/כל\s+(יום|שבוע)/.test(t);
+  return {kind,date,to,course,start:tm.start||'',end:tm.end||'',weekly,text:t};
+}
+const KIND_TXT={exam:'מבחן',submission:'הגשה',task:'משימה',work:'משמרת עבודה',class:'שיעור',other:'פגישה / אירוע',miluim:'מילואים'};
+function quickPreview(){
+  const q=parseQuick($('#qText').value), box=$('#qPrev');
+  if(!q){box.hidden=true;return}
+  const need=['exam','submission','work','class','other','miluim'].includes(q.kind)&&!q.date;
+  const when=q.date?`${DAYS[parseYmd(q.date).getDay()]} ${dm(q.date)}${q.to?' עד '+dm(q.to):''}`:'';
+  const time=q.kind==='exam'?(q.start||'09:00'):q.kind==='submission'?(q.start||'23:59'):q.start?(q.start+(q.end?'–'+q.end:'')):'';
+  box.hidden=false; box.className='qprev'+(need?' bad':'');
+  box.innerHTML=need?`זה נראה כמו <b>${KIND_TXT[q.kind]}</b>, אבל חסר תאריך. אפשר לכתוב "מחר", "ביום שלישי" או תאריך כמו 20/12.`
+    :`יתווסף: <b>${KIND_TXT[q.kind]}</b>${q.course&&['exam','submission','task','class'].includes(q.kind)?' · '+esc(q.course):''}${when?' · '+when:''}${time?' · '+time:''}${q.weekly?' · כל שבוע':''}. לוחצים Enter להוספה.`;
+}
+$('#qText').addEventListener('input',quickPreview);
+$('#quickForm').onsubmit=e=>{
+  e.preventDefault();
+  const q=parseQuick($('#qText').value); if(!q) return;
+  if(['exam','submission','work','class','other','miluim'].includes(q.kind)&&!q.date){quickPreview();return}
+  const course=q.course||'כללי';
+  if(q.kind==='exam'){const bohen=/בוחן/.test(q.text);st.events.push({id:uid(),kind:'exam',course,title:(bohen?'בוחן':'מבחן')+(/מועד\s*ב/.test(q.text)?' מועד ב׳':''),date:q.date,time:q.start||'09:00',hours:bohen?10:20,difficulty:2,duration:bohen?120:180})}
+  else if(q.kind==='submission'){st.events.push({id:uid(),kind:'submission',course,title:q.text.slice(0,80),date:q.date,time:q.start||'23:59',hours:6,difficulty:2})}
+  else if(q.kind==='task'){st.tasks.push({id:uid(),text:q.text,course:q.course||'',due:q.date||'',done:false})}
+  else if(q.kind==='miluim'){st.constraints.push({id:uid(),kind:'miluim',title:'מילואים',from:q.date,to:q.to||q.date,allDay:true})}
+  else{const st0=q.start||(q.kind==='work'?'09:00':'10:00');const en=q.end||fmtMin(Math.min(23*60+30,toMin(st0)+(q.kind==='work'?240:90)));
+    const c={id:uid(),kind:q.kind,title:q.kind==='class'?(q.course||q.text.slice(0,40)):q.text.slice(0,60),start:st0,end:en};
+    if(q.weekly) c.days=[parseYmd(q.date).getDay()]; else {c.from=q.date;c.to=q.date}
+    st.constraints.push(c)}
+  $('#qText').value=''; $('#qPrev').hidden=true; save(); render();
+  toast(`נוסף: ${KIND_TXT[q.kind]}${q.date?' ל-'+dm(q.date):''}. אפשר לערוך אותו בעמוד המתאים.`);
+};
+
 /* ---------- pages ---------- */
-const PAGES=['home','exams','topics','constraints','tasks','grades','mail','connect','prefs'];
+const PAGES=['home','load','exams','topics','constraints','tasks','grades','mail','connect','prefs'];
 function route(){
   let h=location.hash.slice(1);
   if(h==='privacy') return;
