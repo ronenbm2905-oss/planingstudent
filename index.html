@@ -2536,7 +2536,7 @@ async function fileToText(f){
   }
   if(n.endsWith('.doc')) throw new Error('doc');
   const buf=await f.arrayBuffer(); let t=new TextDecoder('utf-8').decode(buf);
-  if(t.includes('�')){try{t=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
+  if(t.includes('\uFFFD')){try{t=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
   return t;
 }
 
