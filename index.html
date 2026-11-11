@@ -171,6 +171,30 @@ details summary{cursor:pointer;color:var(--accent);font-weight:600}
 .blk.class{background:color-mix(in srgb,var(--cc) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--cc) 55%,transparent);color:var(--ink)}
 .blk.class b{color:var(--cc)}
 .blk .meta{display:block;font-size:.72rem;color:var(--muted)}
+.connect{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+@media (max-width:1050px){.connect{grid-template-columns:1fr}}
+.ccard{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px;min-width:0}
+.chead{display:flex;gap:12px;align-items:center}
+.cicon{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 13%,var(--surface));color:var(--accent)}
+.cicon svg,.dropicon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ctitle{flex:1;min-width:0;display:flex;flex-direction:column}
+.ctitle h3{font-size:1.05rem}
+.ctitle span{font-size:.8rem;color:var(--muted)}
+.pill.on{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.off{background:var(--hatch);color:var(--muted)}
+.pill.bad{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.ccard .gmstat{font-size:.86rem;color:var(--muted)}
+.ccard .gmstat.ok{color:var(--ok)}.ccard .gmstat.err{color:var(--danger)}
+.cfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.how summary{font-size:.84rem;font-weight:600}
+.how .steps{margin-top:8px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;cursor:pointer;color:var(--muted);background:var(--surface);transition:border-color .15s,color .15s}
+.drop:hover,.drop.over{border-color:var(--accent);color:var(--accent)}
+.drop b{color:var(--ink);font-size:.92rem}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:.86rem;text-decoration:underline;text-underline-offset:3px}
+#syncResult:empty{display:none}
 .warnbox{border-radius:8px;padding:8px 12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink);font-size:.88rem}
 .toasts{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(360px,calc(100vw - 32px))}
 .toast{background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
@@ -289,49 +313,7 @@ details summary{cursor:pointer;color:var(--accent);font-weight:600}
     </section>
 
     <section class="panel">
-      <div class="spread"><div><div class="eyebrow">עדכונים מהמכללה</div><h2>מיילים ואתר המכללה</h2></div><span class="muted" id="syncInfo"></span></div>
-      <div class="gmail" id="moodleBox">
-        <div class="spread"><h3>סנכרון עם Moodle</h3>
-          <div class="seg" role="radiogroup" aria-label="שיטת סנכרון">
-            <label><input type="radio" name="mdMode" id="mdModeFile" value="file"><span>ייבוא קובץ</span></label>
-            <label><input type="radio" name="mdMode" id="mdModeG" value="gcal"><span>אוטומטי דרך Google Calendar</span></label>
-          </div></div>
-        <div id="mdFile">
-          <ol class="steps">
-            <li>נכנסים ל-Moodle של המכללה למינהל ופותחים את <b>לוח השנה</b>.</li>
-            <li>לוחצים <b>ייבוא או ייצוא לוחות שנה</b>, ואז <b>ייצוא לוח שנה</b>.</li>
-            <li>בוחרים <b>כל האירועים</b> ואת התקופה הארוכה ביותר שמוצעת, ולוחצים <b>ייצוא</b>. יורד קובץ ‎.ics‎.</li>
-            <li>בוחרים כאן את הקובץ. כדי לקבל עדכונים חוזרים על זה מדי פעם.</li>
-          </ol>
-          <div class="row">
-            <label style="flex:1 1 220px">קובץ היומן מ-Moodle (אפשר גם לגרור אותו לכאן)<input type="file" id="icsFile"></label>
-            <button type="button" id="icsDemo">סנכרון לדוגמה</button>
-          </div>
-        </div>
-        <div id="mdG" hidden>
-          <ol class="steps">
-            <li>באותו מסך ב-Moodle (<b>ייצוא לוח שנה</b>) לוחצים <b>קבלת כתובת URL ללוח השנה</b> ומעתיקים את הקישור.</li>
-            <li>ב-Google Calendar במחשב: <b>יומנים אחרים</b> ← <b>+</b> ← <b>מכתובת URL</b>, מדביקים ולוחצים <b>הוספת יומן</b>.</li>
-            <li id="gcStep3">ב-claude.ai מחברים את <b>Google Calendar</b>: הגדרות ← Connectors.</li>
-            <li>לוחצים כאן על הכפתור ובוחרים את יומן ה-Moodle. מעכשיו הבדיקה חוזרת כל 30 דקות כשהדף פתוח.</li>
-          </ol>
-          <div class="gmstat" id="gcStat">בודק אם אפשר להתחבר ל-Google Calendar…</div>
-          <div class="row">
-            <label id="gcCalWrap" hidden style="flex:1 1 220px">איזה יומן הוא של Moodle<select id="gcCal"></select></label>
-          </div>
-          <div id="gcExtra" hidden></div>
-          <div class="row">
-            <button type="button" class="primary" id="gcBtn" hidden>סנכרון עם Google Calendar</button>
-          </div>
-        </div>
-        <div id="syncResult"></div>
-      </div>
-      <div class="gmail" id="gmailBox">
-        <div class="spread"><h3>חיבור ל-Gmail</h3><button type="button" class="primary" id="gmBtn" hidden>חיבור ל-Gmail ומשיכת מיילים</button></div>
-        <div class="gmstat" id="gmStat">בודק אם אפשר להתחבר ל-Gmail…</div>
-        <label id="gmFromWrap" hidden>נכנסים רק מיילים מהכתובת הזו (ברירת מחדל: המכללה למינהל)<input id="gmFrom" placeholder="colman.ac.il"></label>
-      </div>
-      <h3>סיכום מיילים רלוונטיים</h3>
+      <div id="mailPanel"><div class="eyebrow">עדכונים מהמכללה</div><h2>מיילים מהמכללה</h2></div>
       <div id="mailList" style="display:flex;flex-direction:column;gap:8px"></div>
       <details>
         <summary>הדבקת מייל חדש לסיכום</summary>
@@ -344,6 +326,45 @@ details summary{cursor:pointer;color:var(--accent);font-weight:600}
       </details>
     </section>
   </div>
+
+  <section class="panel" id="connectPanel">
+    <div class="spread"><div><div class="eyebrow">חיבורים וסנכרון</div><h2>מה מתעדכן לבד</h2></div><span class="muted small" id="syncInfo"></span></div>
+    <div class="connect">
+      <article class="ccard">
+        <div class="chead"><span class="cicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/></svg></span><div class="ctitle"><h3>Google Calendar</h3><span>מבחנים, הגשות ושיעורים מ-Moodle, אוטומטית</span></div><span class="pill off" id="gcPill">לא מחובר</span></div>
+        <div class="gmstat" id="gcStat">בודק אם אפשר להתחבר ל-Google Calendar…</div>
+        <label id="gcCalWrap" hidden>איזה יומן הוא של Moodle<select id="gcCal"></select></label>
+        <div id="gcExtra" hidden></div>
+        <div class="cfoot"><button type="button" class="primary" id="gcBtn" hidden>סנכרון עם Google Calendar</button>
+        <details class="how"><summary>איך מחברים?</summary>
+          <ol class="steps">
+            <li>ב-Moodle: <b>לוח שנה</b> ← <b>ייצוא לוח שנה</b> ← <b>קבלת כתובת URL ללוח השנה</b>, ומעתיקים.</li>
+            <li>ב-Google Calendar במחשב: <b>יומנים אחרים</b> ← <b>+</b> ← <b>מכתובת URL</b> ← מדביקים ← <b>הוספת יומן</b>.</li>
+            <li id="gcStep3">ב-claude.ai מחברים את <b>Google Calendar</b>: הגדרות ← Connectors.</li>
+            <li>לוחצים על הכפתור ובוחרים את יומן ה-Moodle. הבדיקה חוזרת כל 30 דקות כשהדף פתוח.</li>
+          </ol></details></div>
+      </article>
+      <article class="ccard">
+        <div class="chead"><span class="cicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3 3 3-3"/></svg></span><div class="ctitle"><h3>קובץ מ-Moodle</h3><span>ייבוא ידני, בלי התחברות</span></div><span class="pill off" id="mdPill">לא יובא</span></div>
+        <label class="drop" id="mdFile"><input type="file" id="icsFile"><span class="dropicon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9 14l3 3 3-3"/></svg></span><b>גוררים לכאן את קובץ היומן</b><span>או לוחצים כדי לבחור קובץ (‎.ics‎)</span></label>
+        <div class="cfoot"><button type="button" class="linkbtn" id="icsDemo">לנסות עם קובץ לדוגמה</button>
+        <details class="how"><summary>איך מורידים את הקובץ?</summary>
+          <ol class="steps">
+            <li>נכנסים ל-Moodle של המכללה ופותחים את <b>לוח השנה</b>.</li>
+            <li><b>ייבוא או ייצוא לוחות שנה</b> ← <b>ייצוא לוח שנה</b>.</li>
+            <li>בוחרים <b>כל האירועים</b> ואת התקופה הארוכה ביותר ← <b>ייצוא</b>.</li>
+            <li>גוררים לכאן את הקובץ שירד. כדי לקבל עדכונים, חוזרים על זה מדי פעם.</li>
+          </ol></details></div>
+      </article>
+      <article class="ccard">
+        <div class="chead"><span class="cicon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span><div class="ctitle"><h3>Gmail</h3><span>מיילים מהמכללה, מסוכמים</span></div><span class="pill off" id="gmPill">לא מחובר</span></div>
+        <div class="gmstat" id="gmStat">בודק אם אפשר להתחבר ל-Gmail…</div>
+        <label id="gmFromWrap" hidden>נכנסים רק מיילים מהכתובת<input id="gmFrom" placeholder="colman.ac.il"></label>
+        <div class="cfoot"><button type="button" class="primary" id="gmBtn" hidden>חיבור ל-Gmail ומשיכת מיילים</button><a class="linkbtn" id="gmPaste" href="#mailPanel" hidden>מעבר להדבקת מייל</a></div>
+      </article>
+    </div>
+    <div id="syncResult"></div>
+  </section>
 
   <section class="panel" id="gradesPanel">
     <div class="spread"><div><div class="eyebrow">גיליון ציונים</div><h2>ציונים וממוצע</h2></div>
@@ -896,6 +917,7 @@ function renderMail(){
   if(irr.length) h+=`<details><summary>${irr.length} מיילים לא רלוונטיים הוסתרו</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">${irr.map(card).join('')}</div></details>`;
   $('#mailList').innerHTML=h;
   $('#syncInfo').textContent=st.synced?'סנכרון אחרון: '+st.synced:'עוד לא סונכרן';
+  const mp=$('#mdPill'); if(mp){const has=st.constraints.some(c=>c.src==='ics')||st.events.some(e=>e.src==='ics'); mp.className='pill '+(has?'on':'off'); mp.textContent=has?'יובא':'לא יובא'}
 }
 
 /* ---------- calendar sync (Moodle .ics / Google Calendar) ---------- */
@@ -1173,8 +1195,9 @@ function readIcsFile(f){
 }
 $('#icsFile').onchange=e=>{readIcsFile(e.target.files[0]); e.target.value=''};
 const mdBox=$('#mdFile');
-mdBox.addEventListener('dragover',e=>{e.preventDefault()});
-mdBox.addEventListener('drop',e=>{e.preventDefault(); readIcsFile(e.dataTransfer&&e.dataTransfer.files[0])});
+mdBox.addEventListener('dragover',e=>{e.preventDefault();mdBox.classList.add('over')});
+mdBox.addEventListener('dragleave',()=>mdBox.classList.remove('over'));
+mdBox.addEventListener('drop',e=>{e.preventDefault(); mdBox.classList.remove('over'); readIcsFile(e.dataTransfer&&e.dataTransfer.files[0])});
 
 /* ---------- Direct Google sign-in (public site, no Claude) ---------- */
 let gDirect=false;
@@ -1231,7 +1254,8 @@ function mailText(part){
 /* ---------- Gmail (claude.ai connector) ---------- */
 const GM='Gmail';
 let mcp=null, gmTimer=null, gmBusy=false;
-function setGm(cls,txt){const el=$('#gmStat');el.className='gmstat '+(cls||'');el.textContent=txt}
+function setPill(id,cls){const p=$(id);if(!p)return;p.className='pill '+(cls==='ok'?'on':cls==='err'?'bad':'off');p.textContent=cls==='ok'?'מחובר':cls==='err'?'צריך טיפול':'לא מחובר'}
+function setGm(cls,txt){const el=$('#gmStat');el.className='gmstat '+(cls||'');el.textContent=txt;setPill('#gmPill',cls)}
 function cleanBody(t){
   const out=[];
   for(const line of String(t).split(/\r?\n/)){
@@ -1318,7 +1342,7 @@ $('#gmFrom').onchange=()=>{st.gmailFrom=$('#gmFrom').value.trim().replace(/^@/,'
   try{ mcp=(window.claude&&typeof window.claude.use==='function')?await window.claude.use('mcp'):null }catch(e){ mcp=null }
   initGcal();
   if(gDirect&&GMAIL_DIRECT){ $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false; $('#gmBtn').textContent='התחברות עם Google ומשיכת מיילים'; setGm('','לוחצים, מתחברים עם Google ומאשרים קריאת מיילים. האפליקציה רק קוראת מיילים מהמכללה, לא שולחת ולא מוחקת.'); return }
-  if(!mcp){ setGm('',window.claude?'חיבור ישיר ל-Gmail זמין כשפותחים את הקישור ב-claude.ai עם חשבון שמחובר אליו Gmail. כאן אפשר להדביק מיילים ידנית (למטה).':'כאן מדביקים מיילים מהמכללה ידנית: פותחים את המייל ב-Gmail, מעתיקים ומדביקים למטה, והאפליקציה מסכמת אותו.'); return }
+  if(!mcp){ setGm('',window.claude?'חיבור ישיר ל-Gmail זמין כשפותחים את הקישור ב-claude.ai עם חשבון שמחובר אליו Gmail. בינתיים אפשר להדביק מיילים בקטע "מיילים מהמכללה".':'באתר הזה מדביקים מיילים ידנית בקטע "מיילים מהמכללה", והאפליקציה מסכמת אותם.'); $('#gmPill').className='pill off'; $('#gmPill').textContent='הדבקה ידנית'; $('#gmPaste').hidden=false; return }
   $('#gmFromWrap').hidden=false; $('#gmFrom').value=st.gmailFrom||''; $('#gmBtn').hidden=false;
   if(st.gmailOn) fetchGmail(true);
   else setGm('','לחצו על הכפתור ואשרו גישה. האפליקציה רק קוראת מיילים מהמכללה, לא שולחת ולא מוחקת.');
@@ -1327,7 +1351,7 @@ $('#gmFrom').onchange=()=>{st.gmailFrom=$('#gmFrom').value.trim().replace(/^@/,'
 /* ---------- Google Calendar (claude.ai connector) ---------- */
 const GC='Google Calendar';
 let gcTimer=null, gcBusy=false;
-function setGc(cls,txt){const el=$('#gcStat');el.className='gmstat '+(cls||'');el.textContent=txt}
+function setGc(cls,txt){const el=$('#gcStat');el.className='gmstat '+(cls||'');el.textContent=txt;setPill('#gcPill',cls)}
 function arr(p,keys){
   if(Array.isArray(p)) return p;
   if(p&&typeof p==='object'){ for(const k of keys) if(Array.isArray(p[k])) return p[k]; if(p.result) return arr(p.result,keys) }
@@ -1430,13 +1454,6 @@ async function gcalSync(retry,interactive){
   }catch(e){ gcErr(e,retry) }
   finally{ gcBusy=false; $('#gcBtn').disabled=false; $('#gcBtn').hidden=false }
 }
-function setMdMode(m){
-  st.mdMode=m; save();
-  $('#mdModeFile').checked=m!=='gcal'; $('#mdModeG').checked=m==='gcal';
-  $('#mdFile').hidden=m==='gcal'; $('#mdG').hidden=m!=='gcal';
-}
-document.querySelectorAll('input[name="mdMode"]').forEach(r=>r.addEventListener('change',()=>setMdMode(r.value)));
-setMdMode(st.mdMode||'file');
 $('#gcBtn').onclick=()=>gcalSync(true,true);
 $('#gcCal').onchange=()=>{st.gcalId=$('#gcCal').value;save();if(st.gcalId) gcalSync(true,false)};
 function initGcal(){
