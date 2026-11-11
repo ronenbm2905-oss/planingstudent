@@ -676,6 +676,7 @@ function normalize(x){
   if(!x.topics||typeof x.topics!=='object') x.topics={};
   ['events','constraints','tasks','inbox'].forEach(k=>{if(!Array.isArray(x[k])) x[k]=[]});
   if(!x.alerts) x.alerts={};
+  x.constraints=x.constraints.filter(c=>!(c.src&&/הקלט|recording/i.test(c.title||'')));
   return x;
 }
 normalize(st);
@@ -1388,8 +1389,10 @@ function parseIcs(text){
   }
   return found;
 }
+const REC_RE=/הקלט|recording|zoom recording/i;
 const EXAM_RE=/מבחן|בחינה|בוחן|exam/i, SUB_RE=/הגש|מטלה|תרגיל|עבודה|assignment|due|closes|נסגר|מועד אחרון/i;
 function busyFrom(f,source){
+  if(REC_RE.test(f.summary||'')) return null;
   if(f.allDay||!f.time||!f.endTime) return null;
   if(f.endDate&&f.endDate!==f.date) return null;
   if(toMin(f.endTime)<=toMin(f.time)) return null;
@@ -1445,7 +1448,8 @@ function ingestCalendar(found,source,busyOnly){
 }
 function importIcs(text){
   const found=parseIcs(text); const r=ingestCalendar(found,'ics');
-  const msg=`יובא עכשיו: ${r.added} מבחנים והגשות חדשים, ${r.updated} עודכנו, ${r.busy} שיעורים ואירועים נכנסו כזמן תפוס.`;
+  const rec=found.filter(f=>REC_RE.test(f.summary||'')).length;
+  const msg=`יובא עכשיו: ${r.added} מבחנים והגשות חדשים, ${r.updated} עודכנו, ${r.busy} שיעורים ואירועים נכנסו כזמן תפוס${rec?`, ${rec} הקלטות שיעור דולגו (הן לא תופסות זמן)`:''}.`;
   const el=$('#mdStat'); el.className='gmstat ok'; el.textContent=msg+' (מתוך '+found.length+' אירועים בקובץ)';
   toast(msg+(r.busy?' השיעורים מופיעים בלו״ז.':''));
 }
