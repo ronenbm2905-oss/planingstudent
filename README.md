@@ -6,3 +6,5 @@
 - מדיניות פרטיות: https://planingstudent.netlify.app/#privacy
 
 הקובץ נבנה אוטומטית. לא עורכים אותו כאן ידנית.
+
+עדכונים לאתר מתפרסמים אוטומטית מה-branch `main` דרך Netlify.
