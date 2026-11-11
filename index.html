@@ -1164,7 +1164,7 @@ async function readGradeFile(f){
     }else{
       const buf=await f.arrayBuffer();
       let txt=new TextDecoder('utf-8').decode(buf);
-      if(txt.includes('�')){try{txt=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
+      if(txt.includes('\uFFFD')){try{txt=new TextDecoder('windows-1255').decode(buf)}catch(e){}}
       rows=textRows(txt,name.endsWith('.csv'));
     }
     showGradePreview(parseGradeRows(rows),'קובץ');
